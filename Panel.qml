@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Controls
 import Quickshell
 import Quickshell.Io
 import qs.Commons
@@ -220,29 +221,52 @@ Panel {
       onCloseRequested: { if (!content.item || !content.item.handleClose()) root.close() }
       onTabRequested: function(direction) { root.switchPanel(direction) }
 
-      // The look's body, created with its bindings already set. Swapping
-      // looks recreates it; the service keeps the state.
-      Loader {
-        id: content
-        width: parent.width
-        function load() {
-          // The host hands `bar` over after creating the panel; the body
-          // reads it from its first frame, so wait for it.
-          if (!root.bar) return
-          var look = root.fallbackLook !== "" ? root.fallbackLook : root.look
-          setSource("looks/" + look + "/PopupContent.qml", {
-            service: Qt.binding(function() { return root.service }),
-            bar: Qt.binding(function() { return root.bar }),
-            opened: Qt.binding(function() { return root.opened })
-          })
+      // The popup body scrolls inside the card. The Omarchy look's room
+      // list is as tall as every room, so without this the list runs past
+      // the bottom of the popup instead of scrolling.
+      Flickable {
+        id: body
+        anchors.fill: parent
+        clip: true
+        contentWidth: width
+        contentHeight: content.item ? content.item.implicitHeight : 0
+        boundsBehavior: Flickable.StopAtBounds
+        interactive: contentHeight > height
+        ScrollBar.vertical: ScrollBar {
+          policy: ScrollBar.AsNeeded
+          width: Math.max(4, Style.space(4))
+          background: null
+          contentItem: Rectangle {
+            implicitWidth: Math.max(2, Style.space(2))
+            radius: width / 2
+            color: Util.alpha(root.bar ? root.bar.foreground : "white", 0.35)
+          }
         }
-        Component.onCompleted: load()
-        onLoaded: item.closeRequested.connect(function() { root.close() })
-        onStatusChanged: {
-          if (status !== Loader.Error) return
-          console.log("[yapper] popup body failed to load: " + source)
-          // Deferred: the status changes while the source is being set.
-          if (root.fallbackLook === "" && root.look !== "omarchy") Qt.callLater(function() { root.fallbackLook = "omarchy" })
+
+        // The look's body, created with its bindings already set. Swapping
+        // looks recreates it; the service keeps the state.
+        Loader {
+          id: content
+          width: body.width
+          function load() {
+            // The host hands `bar` over after creating the panel; the body
+            // reads it from its first frame, so wait for it.
+            if (!root.bar) return
+            var look = root.fallbackLook !== "" ? root.fallbackLook : root.look
+            setSource("looks/" + look + "/PopupContent.qml", {
+              service: Qt.binding(function() { return root.service }),
+              bar: Qt.binding(function() { return root.bar }),
+              opened: Qt.binding(function() { return root.opened })
+            })
+          }
+          Component.onCompleted: load()
+          onLoaded: item.closeRequested.connect(function() { root.close() })
+          onStatusChanged: {
+            if (status !== Loader.Error) return
+            console.log("[yapper] popup body failed to load: " + source)
+            // Deferred: the status changes while the source is being set.
+            if (root.fallbackLook === "" && root.look !== "omarchy") Qt.callLater(function() { root.fallbackLook = "omarchy" })
+          }
         }
       }
     }
