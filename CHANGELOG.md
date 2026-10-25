@@ -6,6 +6,17 @@ All notable changes to the Yapper plugin. The format follows
 
 ## [Unreleased]
 
+### Fixed
+- "Set up encryption" stopped with the homeserver's raw
+  `User-Interactive Authentication required` error when the server asked for
+  the account password again before accepting a new cross-signing identity
+  (Synapse with password login does). The plugin now asks for the password and
+  retries; it goes to the daemon, is used once, and is not stored.
+- An account with an encryption identity but no usable recovery key on this
+  device had no way forward: "Use recovery key" failed, and "Set up encryption"
+  was hidden because an identity already existed. The menu now offers **Make a
+  new recovery key**, which re-keys secret storage and turns key backup on.
+
 ## [1.0.7]
 
 ### Security

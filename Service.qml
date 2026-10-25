@@ -300,7 +300,12 @@ Item {
     if (root.activeFlow && root.activeFlow.flow_id === flowId) root.activeFlow = null
   }
   function recover(key, cb) { root.request("recover", { key: key }, function(r) { if (r.ok) root.verification = r.result; cb(r) }) }
-  function setupRecovery(cb) { root.request("setup_recovery", {}, function(r) { root.refreshVerification(); cb(r) }) }
+  // `password` is only sent when the homeserver asks for it again to create
+  // the cross-signing identity (`code: "reauth_required"` on the first try).
+  function setupRecovery(password, cb) {
+    var fields = password ? { password: String(password) } : {}
+    root.request("setup_recovery", fields, function(r) { root.refreshVerification(); cb(r) })
+  }
   function resetRecoveryKey(cb) { root.request("reset_recovery_key", {}, function(r) { root.refreshVerification(); cb(r) }) }
   function dismissFlow() { root.activeFlow = null }
 

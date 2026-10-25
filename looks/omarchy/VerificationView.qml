@@ -23,9 +23,10 @@ Rectangle {
   readonly property bool inFlow: flowState !== "" && flowState !== "done" && flowState !== "cancelled"
   readonly property var status: service ? service.verification : null
   readonly property bool hasIdentity: status ? status.cross_signing === true : false
+  readonly property bool recoveryOk: status ? String(status.recovery) === "enabled" : false
   readonly property int otherDevices: status && status.other_devices ? status.other_devices.length : 0
 
-  // "menu" | "waiting" | "emoji" | "recovery" | "setup" | "key" | "done" | "cancelled"
+  // "menu" | "waiting" | "emoji" | "recovery" | "reauth" | "setup" | "key" | "done" | "cancelled"
   property string mode: "menu"
   property string recoveryKey: ""      // shown once after setup
   property bool busy: false
@@ -41,7 +42,7 @@ Rectangle {
   border.width: 1
   border.color: verified ? Util.alpha(root.fg, 0.25) : Color.urgent
 
-  readonly property bool hasTextFocus: keyField.activeFocus
+  readonly property bool hasTextFocus: keyField.activeFocus || passwordField.activeFocus
 
   onFlowStateChanged: {
     if (flowState === "emoji") mode = "emoji"
@@ -50,7 +51,11 @@ Rectangle {
     else if (flowState === "cancelled") mode = "cancelled"
   }
 
-  function reset() { mode = "menu"; errorText = ""; busy = false; if (service) service.dismissFlow() }
+  function reset() {
+    mode = "menu"; errorText = ""; busy = false
+    passwordField.text = ""
+    if (service) service.dismissFlow()
+  }
 
   function startRequest() {
     if (busy) return
@@ -96,12 +101,27 @@ Rectangle {
       mode = "key"
     })
   }
-  function doSetup() {
+  function doSetup(withPassword) {
     if (busy) return
+    var pw = withPassword ? passwordField.text : ""
+    if (withPassword && pw === "") return
     busy = true; errorText = ""
-    service.setupRecovery(function(r) {
+    service.setupRecovery(withPassword ? pw : null, function(r) {
       busy = false
-      if (!r.ok) { errorText = r.error || "Could not set up recovery"; return }
+      if (!r.ok) {
+        // The homeserver wants the password again before it will accept a new
+        // encryption identity. Ask for it; a wrong one comes back the same way.
+        if (r.code === "reauth_required") {
+          errorText = withPassword ? (r.error || "That password was not accepted") : ""
+          passwordField.text = ""
+          mode = "reauth"
+          Qt.callLater(function() { passwordField.forceActiveFocus() })
+          return
+        }
+        errorText = r.error || "Could not set up recovery"
+        return
+      }
+      passwordField.text = ""
       recoveryKey = String(r.result.recovery_key)
       mode = "key"
     })
@@ -140,6 +160,7 @@ Rectangle {
               case "waiting": return root.flow && !root.flow.outgoing ? "Verification request" : "Waiting for your other device"
               case "emoji": return "Compare the emoji"
               case "recovery": return "Enter your recovery key"
+              case "reauth": return "Confirm it's you"
               case "setup": return "Set up encryption for this account"
               case "key": return "Your recovery key"
               case "done": return "This device is verified"
@@ -210,9 +231,11 @@ Rectangle {
         wrapMode: Text.WordWrap
         visible: !root.compact
         text: root.hasIdentity
-          ? (root.otherDevices > 0
-              ? "Confirm from a device that is already verified — Element on your phone, for example — or type the recovery key you saved when you set up encryption."
-              : "No other devices are signed in. Type the recovery key you saved when you set up encryption.")
+          ? (root.recoveryOk
+              ? (root.otherDevices > 0
+                  ? "Confirm from a device that is already verified — Element on your phone, for example — or type the recovery key you saved when you set up encryption."
+                  : "No other devices are signed in. Type the recovery key you saved when you set up encryption.")
+              : "This account has an encryption identity, but this device has no usable recovery key. Making a new one turns key backup on; the old key stops working.")
           : "This account has no encryption identity yet. Setting it up creates your cross-signing keys and a recovery key, and turns on key backup."
         color: root.fg; opacity: 0.8
         font.family: root.fontFamily; font.pixelSize: Style.font.body
@@ -229,11 +252,19 @@ Rectangle {
           onClicked: root.startRequest()
         }
         Button {
-          visible: root.hasIdentity
+          visible: root.hasIdentity && root.recoveryOk
           text: "Use recovery key"
           iconText: "󰌆"
           bordered: true
           onClicked: { root.mode = "recovery"; Qt.callLater(function() { keyField.forceActiveFocus() }) }
+        }
+        Button {
+          visible: root.hasIdentity && !root.recoveryOk
+          text: root.busy ? "Making a new key…" : "Make a new recovery key"
+          iconText: "󰌆"
+          bordered: true
+          enabled: !root.busy
+          onClicked: root.doSetup()
         }
         Button {
           visible: !root.hasIdentity
@@ -343,6 +374,34 @@ Rectangle {
         spacing: Style.spacing.controlGap
         Button { text: root.busy ? "Checking…" : "Recover"; bordered: true; enabled: !root.busy; onClicked: root.doRecover() }
         Button { text: "Back"; enabled: !root.busy; onClicked: { keyField.text = ""; root.reset() } }
+      }
+    }
+
+    // Password the homeserver asked for again (UIA)
+    Column {
+      width: parent.width
+      spacing: Style.space(8)
+      visible: root.mode === "reauth"
+      Text {
+        width: parent.width
+        wrapMode: Text.WordWrap
+        text: "Your homeserver asks for your password again before it will accept a new encryption identity. It goes to the daemon, is used once, and is not stored."
+        color: root.fg; opacity: 0.8
+        font.family: root.fontFamily; font.pixelSize: Style.font.body
+      }
+      TextField {
+        id: passwordField
+        width: parent.width
+        maximumLength: 1024
+        password: true
+        placeholderText: "Password"
+        enabled: !root.busy
+        onAccepted: root.doSetup(true)
+      }
+      Row {
+        spacing: Style.spacing.controlGap
+        Button { text: root.busy ? "Setting up…" : "Confirm"; bordered: true; enabled: !root.busy; onClicked: root.doSetup(true) }
+        Button { text: "Back"; enabled: !root.busy; onClicked: { root.errorText = ""; passwordField.text = ""; root.mode = "menu" } }
       }
     }
 

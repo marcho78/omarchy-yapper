@@ -22,10 +22,11 @@ Item {
   readonly property var status: service ? service.verification : null
   readonly property bool verified: service ? service.deviceVerified : false
   readonly property bool hasIdentity: status ? status.cross_signing === true : false
+  readonly property bool recoveryOk: status ? String(status.recovery) === "enabled" : false
   readonly property int otherDevices: status && status.other_devices ? status.other_devices.length : 0
-  readonly property bool hasTextFocus: keyField.hasFocus
+  readonly property bool hasTextFocus: keyField.hasFocus || passwordField.hasFocus
 
-  // menu | waiting | emoji | recovery | key | done | cancelled
+  // menu | waiting | emoji | recovery | reauth | key | done | cancelled
   property string mode: "menu"
   property string recoveryKey: ""
   property bool busy: false
@@ -38,7 +39,11 @@ Item {
     else if (flowState === "done") { mode = "done"; if (service) service.refreshVerification() }
     else if (flowState === "cancelled") mode = "cancelled"
   }
-  function reset() { mode = "menu"; errorText = ""; busy = false; confirmReset = false; if (service) service.dismissFlow() }
+  function reset() {
+    mode = "menu"; errorText = ""; busy = false; confirmReset = false
+    passwordField.text = ""
+    if (service) service.dismissFlow()
+  }
   function startRequest() {
     if (busy) return
     busy = true; errorText = ""
@@ -80,12 +85,27 @@ Item {
       mode = "key"
     })
   }
-  function doSetup() {
+  function doSetup(withPassword) {
     if (busy) return
+    var pw = withPassword ? passwordField.text : ""
+    if (withPassword && pw === "") return
     busy = true; errorText = ""
-    service.setupRecovery(function(r) {
+    service.setupRecovery(withPassword ? pw : null, function(r) {
       busy = false
-      if (!r.ok) { errorText = r.error || "Could not set up recovery"; return }
+      if (!r.ok) {
+        // The homeserver wants the password again before it will accept a new
+        // encryption identity. Ask for it; a wrong one comes back the same way.
+        if (r.code === "reauth_required") {
+          errorText = withPassword ? (r.error || "That password was not accepted") : ""
+          passwordField.text = ""
+          mode = "reauth"
+          Qt.callLater(function() { passwordField.forceActiveFocus() })
+          return
+        }
+        errorText = r.error || "Could not set up recovery"
+        return
+      }
+      passwordField.text = ""
       recoveryKey = String(r.result.recovery_key)
       mode = "key"
     })
@@ -128,6 +148,7 @@ Item {
               case "waiting": return root.flow && !root.flow.outgoing ? "Verification request" : "Waiting for your other device"
               case "emoji": return "Do these match?"
               case "recovery": return "Enter your recovery key"
+              case "reauth": return "Confirm it's you"
               case "key": return "Your recovery key"
               case "done": return "This device is verified"
               case "cancelled": return "Verification cancelled"
@@ -148,13 +169,16 @@ Item {
                 : "Accept the request on your other device. The same seven emoji will appear on both screens."
               case "emoji": return "Both screens should show the same seven emoji, in the same order."
               case "recovery": return "The key you saved when you set up encryption — 48 characters in groups of four."
+              case "reauth": return "Your homeserver asks for your password again before it will accept a new encryption identity. It goes to the daemon, is used once, and is not stored."
               case "key": return "Save it somewhere safe before you close this. It cannot be shown again."
               case "done": return "Other people's clients now trust it, and encrypted history is backed up."
               case "cancelled": return "Nothing changed. Start again whenever you like."
               default: return root.verified
                 ? "Encrypted history is backed up" + (root.status ? " · " + root.otherDevices + " other device" + (root.otherDevices === 1 ? "" : "s") : "") + "."
                 : (root.hasIdentity
-                    ? (root.otherDevices > 0 ? "Confirm from a device that is already verified, or type the recovery key you saved." : "No other devices are signed in. Type the recovery key you saved when you set up encryption.")
+                    ? (root.recoveryOk
+                        ? (root.otherDevices > 0 ? "Confirm from a device that is already verified, or type the recovery key you saved." : "No other devices are signed in. Type the recovery key you saved when you set up encryption.")
+                        : "This account has an encryption identity, but this device has no usable recovery key. Making a new one turns key backup on; the old key stops working.")
                     : "This account has no encryption identity yet. Setting it up creates your cross-signing keys and a recovery key, and turns on key backup.")
             }
           }
@@ -170,7 +194,8 @@ Item {
       spacing: ui.px(8)
       visible: root.mode === "menu" && !root.verified
       PillButton { c: root.c; visible: root.hasIdentity && root.otherDevices > 0; label: root.busy ? "Sending…" : "Use another device"; icon: "devices"; primary: true; enabled: !root.busy; onClicked: root.startRequest() }
-      PillButton { c: root.c; visible: root.hasIdentity; label: "Use recovery key"; icon: "key"; primary: !(root.otherDevices > 0); onClicked: { root.errorText = ""; root.mode = "recovery"; Qt.callLater(function() { keyField.forceActiveFocus() }) } }
+      PillButton { c: root.c; visible: root.hasIdentity && root.recoveryOk; label: "Use recovery key"; icon: "key"; primary: !(root.otherDevices > 0); onClicked: { root.errorText = ""; root.mode = "recovery"; Qt.callLater(function() { keyField.forceActiveFocus() }) } }
+      PillButton { c: root.c; visible: root.hasIdentity && !root.recoveryOk; label: root.busy ? "Making a new key…" : "Make a new recovery key"; icon: "key"; primary: !(root.otherDevices > 0); enabled: !root.busy; onClicked: root.doSetup() }
       PillButton { c: root.c; visible: !root.hasIdentity; label: root.busy ? "Setting up…" : "Set up encryption"; icon: "lock-simple"; primary: true; enabled: !root.busy; onClicked: root.doSetup() }
     }
     // Verified: recovery key management
@@ -257,6 +282,28 @@ Item {
         spacing: ui.px(8)
         PillButton { c: root.c; label: root.busy ? "Checking…" : "Verify"; primary: true; enabled: !root.busy; onClicked: root.doRecover() }
         PillButton { c: root.c; label: "Back"; onClicked: root.reset() }
+      }
+    }
+
+    // Password the homeserver asked for again (UIA)
+    Column {
+      width: parent.width
+      spacing: ui.px(8)
+      visible: root.mode === "reauth"
+      Field {
+        id: passwordField
+        c: root.c
+        width: parent.width
+        placeholder: "password"
+        maximumLength: 1024
+        echoMode: TextInput.Password
+        onAccepted: root.doSetup(true)
+        onEscaped: root.reset()
+      }
+      Row {
+        spacing: ui.px(8)
+        PillButton { c: root.c; label: root.busy ? "Setting up…" : "Confirm"; icon: "lock-simple"; primary: true; enabled: !root.busy; onClicked: root.doSetup(true) }
+        PillButton { c: root.c; label: "Back"; enabled: !root.busy; onClicked: { root.errorText = ""; passwordField.text = ""; root.mode = "menu" } }
       }
     }
 
