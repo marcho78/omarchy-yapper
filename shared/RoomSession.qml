@@ -254,7 +254,8 @@ Item {
       dayLabel: meta.dayLabel,
       newDivider: false,
       threadRoot: m.thread_root || "",
-      threadJson: m.thread ? JSON.stringify(m.thread) : ""
+      threadJson: m.thread ? JSON.stringify(m.thread) : "",
+      pending: m.pending === true
     }
   }
 
@@ -426,12 +427,19 @@ Item {
       if (session.inThread) { if (m.thread_root !== session.threadRoot) return }
       else if (m.thread_root) { session.bumpThread(m); return }
       var wasAtEnd = session.atEnd
-      session.append(m)
+      var known = session.indexOfEvent(m.event_id)
+      if (known >= 0) {
+        // Our optimistic row, already named by the send reply: take the
+        // profile name the room reports for it.
+        if (m.sender_name) msgModel.setProperty(known, "senderName", m.sender_name)
+      } else if (!(m.sender === session.service.userId && session.adoptEcho(m))) {
+        session.append(m)
+      }
       session.lastEventId = m.event_id
       if (m.sender === session.service.userId || (wasAtEnd && session.viewVisible)) {
         session.stickToEnd = true
         Qt.callLater(session.anchorEnd)
-      } else {
+      } else if (known < 0) {
         session.pendingNew++
       }
     }
@@ -494,7 +502,7 @@ Item {
   function editLastOwn() {
     for (var i = msgModel.count - 1; i >= 0; i--) {
       var it = msgModel.get(i)
-      if (it.mine && it.attachmentJson === "") { session.startEdit({ event_id: it.eventId, body: it.body }); return true }
+      if (it.mine && !it.pending && it.attachmentJson === "") { session.startEdit({ event_id: it.eventId, body: it.body }); return true }
     }
     return false
   }
@@ -526,13 +534,69 @@ Item {
   }
 
   // ---------- sending ----------
+  // The row appears the moment Enter is pressed. The daemon answers only
+  // once the homeserver has taken the event — and, in an encrypted room,
+  // once the room key is ready — so waiting for that answer left the text
+  // sitting in the box for as long as the network took. The row goes in
+  // with a local id and is renamed to its real event id when either the
+  // send reply or the room's own echo arrives, whichever is first.
+  property int localSeq: 0
+  // What the conversation calls you: the name on your last message, so a
+  // pending row is labelled like the sent ones around it.
+  readonly property string ownName: {
+    for (var i = msgModel.count - 1; i >= 0; i--) {
+      var it = msgModel.get(i)
+      if (it.mine && it.senderName !== "" && it.senderName !== "You") return it.senderName
+    }
+    return "You"
+  }
+  function localEcho(text, replyTo, threadRoot) {
+    var id = "local:" + (++session.localSeq)
+    session.append({
+      event_id: id,
+      sender: session.service.userId,
+      sender_name: session.ownName,
+      body: text,
+      msgtype: "m.text",
+      ts: Date.now(),
+      reply_to: replyTo || null,
+      encrypted: session.encrypted,
+      thread_root: threadRoot || null,
+      pending: true
+    })
+    return id
+  }
+  function nameLocal(id, eventId) {
+    var i = session.indexOfEvent(id)
+    if (i < 0) return
+    msgModel.setProperty(i, "eventId", eventId)
+    msgModel.setProperty(i, "pending", false)
+  }
+  // The room's own copy of a message we just sent: take over the pending
+  // row rather than showing the message twice.
+  function adoptEcho(m) {
+    for (var i = 0; i < msgModel.count; i++) {
+      var it = msgModel.get(i)
+      if (!it.pending || it.sender !== m.sender || it.body !== m.body) continue
+      var reply = it.replyJson !== "" ? String(JSON.parse(it.replyJson).event_id || "") : ""
+      var target = m.reply_to ? String(m.reply_to.event_id || "") : ""
+      if (reply !== target) continue
+      msgModel.setProperty(i, "eventId", m.event_id)
+      msgModel.setProperty(i, "pending", false)
+      msgModel.setProperty(i, "ts", Number(m.ts) || it.ts)
+      if (m.sender_name) msgModel.setProperty(i, "senderName", m.sender_name)
+      return true
+    }
+    return false
+  }
+
   function send() {
     if (!session.composer) return
     var text = session.composer.text
     if (text.trim() === "" || !session.roomId || session.busy) return
     typingStop.stop(); session.setTyping(false)
-    session.busy = true
     if (session.editing) {
+      session.busy = true
       var target = session.editing.event_id
       session.service.edit(session.roomId, target, text, function(r) {
         session.busy = false
@@ -543,14 +607,30 @@ Item {
       })
       return
     }
-    var reply = session.replyTo ? session.replyTo.event_id : ""
+    var replyTo = session.replyTo
+    var reply = replyTo ? replyTo.event_id : ""
+    var thread = session.inThread ? session.threadRoot : ""
+    var localId = session.localEcho(text, replyTo, thread)
+    session.composer.text = ""
+    session.service.setDraft(session.draftKey, "")
+    session.replyTo = null
+    session.errorText = ""
+    session.stickToEnd = true
+    Qt.callLater(session.anchorEnd)
     var deliver = session.inThread
       ? function(cb) { session.service.sendInThread(session.roomId, session.threadRoot, text, reply, cb) }
       : function(cb) { session.service.send(session.roomId, text, reply, cb) }
     deliver(function(r) {
-      session.busy = false
-      if (!r.ok) session.errorText = r.error || "Send failed"
-      else { session.composer.text = ""; session.service.setDraft(session.draftKey, ""); session.errorText = ""; session.replyTo = null; Qt.callLater(session.anchorEnd) }
+      if (!r.ok) {
+        var i = session.indexOfEvent(localId)
+        if (i >= 0) msgModel.remove(i)
+        session.errorText = r.error || "Send failed"
+        if (session.replyTo === null) session.replyTo = replyTo
+        if (session.composer && session.composer.text === "") session.composer.text = text
+        session.focusComposerRequested()
+        return
+      }
+      session.nameLocal(localId, r.result.event_id)
     })
   }
   // Enter: an emoji pick if one is highlighted, else the message.

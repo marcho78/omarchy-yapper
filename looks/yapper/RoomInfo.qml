@@ -148,6 +148,7 @@ Item {
 
   Flickable {
     id: list
+    WheelScroll { flickable: list }
     anchors.fill: parent
     clip: true
     contentHeight: column.implicitHeight

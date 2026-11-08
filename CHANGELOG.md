@@ -6,6 +6,31 @@ All notable changes to the Yapper plugin. The format follows
 
 ## [Unreleased]
 
+### Fixed
+- Wheel scrolling moves a fixed, comfortable step per notch (160 px instead of
+  Qt's 72 px, which was about one message row) and no longer loses distance when
+  notches come quickly: Qt used to cancel the previous notch's flick, so five
+  fast notches travelled ~200 px instead of 360. Touchpads still track the
+  fingers one-to-one, and at the end of a list the step moves the next scroller
+  out (the popup body, say) as before.
+- The reply/react bar on a message no longer blinks and stays clickable. The
+  bar's visibility was bound to the hover of a MouseArea the buttons were
+  drawn over, so hovering a button hid the bar, which put the pointer back on
+  the message and showed it again; the bar now keeps its own hover and holds
+  it across the hand-off from the message. The row highlight itself follows
+  the pointer immediately again, so skimming the list leaves no trail.
+- A message appears the moment Enter is pressed instead of waiting for the
+  daemon to come back from the homeserver (and, in an encrypted room, to
+  finish setting up the room key). The row is shown dimmed as pending and is
+  named with its real event id when either the send reply or the room's own
+  echo arrives; a failed send takes it back and restores the text.
+- The community status is asked for one request at a time, with a short
+  throttle, and the room list only asks while there is no answer. An
+  unreachable space alias used to cost the daemon ~30 s per refresh; a burst
+  of those filled its per-connection request queue and held up a send.
+- The room list is only replaced when its contents changed, so a receipt or
+  a typing notice no longer rebuilds every row.
+
 ## [1.0.7]
 
 ### Security

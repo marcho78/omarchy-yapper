@@ -85,6 +85,8 @@ Item {
       IconButton { id: closeButton; anchors.right: parent.right; anchors.rightMargin: ui.px(16); anchors.top: parent.top; anchors.topMargin: ui.px(19); c: root.c; tips: root.tips; icon: "x"; size: ui.px(30); iconSize: ui.px(16); radius: ui.px(8); tooltip: "Close (Esc)"; onClicked: root.close() }
     }
     Flickable {
+      id: modalFlick
+      WheelScroll { flickable: modalFlick }
       anchors.left: parent.left
       anchors.right: parent.right
       anchors.top: header.bottom

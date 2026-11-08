@@ -247,6 +247,7 @@ Item {
 
           Flickable {
             id: listFlick
+            WheelScroll { flickable: listFlick }
             width: parent.width
             height: parent.height - y - developerRow.height - parent.spacing
             contentHeight: roomList.implicitHeight
@@ -321,6 +322,7 @@ Item {
         // Settings
         Flickable {
           id: settingsFlick
+          WheelScroll { flickable: settingsFlick }
           anchors.fill: parent
           visible: root.showSettings
           // A slider drag must not turn into a flick.

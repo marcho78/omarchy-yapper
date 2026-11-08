@@ -334,6 +334,7 @@ Item {
   // The list
   Flickable {
     id: listFlick
+    WheelScroll { flickable: listFlick }
     anchors.left: parent.left
     anchors.right: parent.right
     anchors.top: errorLine.visible ? errorLine.bottom : (hints.visible ? hints.bottom : findRow.bottom)

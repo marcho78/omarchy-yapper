@@ -226,6 +226,7 @@ Panel {
       // the bottom of the popup instead of scrolling.
       Flickable {
         id: body
+        WheelScroll { flickable: body }
         anchors.fill: parent
         clip: true
         contentWidth: width

@@ -46,6 +46,8 @@ Item {
   }
 
   Flickable {
+    id: gateFlick
+    WheelScroll { flickable: gateFlick }
     anchors.fill: parent
     contentHeight: column.implicitHeight + ui.px(60)
     clip: true

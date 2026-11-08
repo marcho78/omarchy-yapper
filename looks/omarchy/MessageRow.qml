@@ -67,6 +67,30 @@ Item {
   property var readBy: []
   property bool paletteOpen: false
   readonly property var quickEmoji: ["👍", "❤️", "😂", "😮", "😢", "🎉", "🔥", "👀"]
+  // A message being sent: drawn dimmed until the daemon names it.
+  property bool pending: false
+
+  // Keep the hover bar alive while the pointer crosses from the message
+  // onto it; see looks/yapper/MessageRow.qml for why.
+  property bool actionsOpen: false
+  function refreshActionsHover() {
+    if (!rowMouse || !actionsMouse) return
+    if (rowMouse.containsMouse || actionsMouse.containsMouse || root.paletteOpen) {
+      actionsHide.stop()
+      root.actionsOpen = true
+    } else if (!actionsHide.running) {
+      actionsHide.restart()
+    }
+  }
+  Timer {
+    id: actionsHide
+    interval: 100
+    onTriggered: if (!rowMouse.containsMouse && !actionsMouse.containsMouse && !root.paletteOpen) root.actionsOpen = false
+  }
+  onPaletteOpenChanged: refreshActionsHover()
+  onVisibleChanged: if (!visible) { actionsHide.stop(); actionsOpen = false }
+  opacity: root.pending ? 0.55 : 1.0
+  Behavior on opacity { NumberAnimation { duration: 120 } }
 
   signal replyRequested()
   signal editRequested()
@@ -233,12 +257,13 @@ Item {
         anchors.fill: parent
         hoverEnabled: true
         acceptedButtons: Qt.NoButton
+        onContainsMouseChanged: root.refreshActionsHover()
       }
 
       // Hover actions: Reply, and Edit on your own text messages
       Rectangle {
         id: actions
-        visible: (rowMouse.containsMouse || actionsMouse.containsMouse || root.paletteOpen) && root.msgtype !== "unable_to_decrypt" && !root.deleted
+        visible: root.actionsOpen && root.msgtype !== "unable_to_decrypt" && !root.deleted && !root.pending
         anchors.right: parent.right
         anchors.top: parent.top
         anchors.topMargin: -Style.space(10)
@@ -249,37 +274,43 @@ Item {
         color: root.bg
         border.width: 1
         border.color: Util.alpha(root.fg, 0.25)
-        MouseArea { id: actionsMouse; anchors.fill: parent; hoverEnabled: true; acceptedButtons: Qt.NoButton }
-        Row {
-          id: actionsRow
-          anchors.centerIn: parent
-          spacing: Style.space(2)
-          Repeater {
-            model: {
-              var a = [{ icon: "󰞅", tip: "React", act: "react" }, { icon: "󰑚", tip: "Reply", act: "reply" }]
-              if (!root.inThread && !root.deleted && root.msgtype !== "system") a.push({ icon: "󰻞", tip: "Thread", act: "thread" })
-              if (root.canEdit) a.push({ icon: "󰏫", tip: "Edit", act: "edit" })
-              if (root.canDelete) a.push({ icon: "󰆴", tip: "Delete", act: "delete" })
-              return a
-            }
-            delegate: Rectangle {
-              required property var modelData
-              width: Style.space(26); height: Style.space(26)
-              radius: Style.space(5)
-              color: aMouse.containsMouse ? root.hover : "transparent"
-              Text { textFormat: Text.PlainText; anchors.centerIn: parent; text: parent.modelData.icon; color: root.fg; font.family: root.fontFamily; font.pixelSize: Style.font.icon }
-              MouseArea {
-                id: aMouse
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: {
-                  var act = parent.modelData.act
-                  if (act === "reply") root.replyRequested()
-                  else if (act === "thread") root.threadRequested()
-                  else if (act === "edit") root.editRequested()
-                  else if (act === "delete") root.deleteRequested()
-                  else root.paletteOpen = !root.paletteOpen
+        MouseArea {
+          id: actionsMouse
+          anchors.fill: parent
+          hoverEnabled: true
+          acceptedButtons: Qt.NoButton
+          onContainsMouseChanged: root.refreshActionsHover()
+          Row {
+            id: actionsRow
+            anchors.centerIn: parent
+            spacing: Style.space(2)
+            Repeater {
+              model: {
+                var a = [{ icon: "󰞅", tip: "React", act: "react" }, { icon: "󰑚", tip: "Reply", act: "reply" }]
+                if (!root.inThread && !root.deleted && root.msgtype !== "system") a.push({ icon: "󰻞", tip: "Thread", act: "thread" })
+                if (root.canEdit) a.push({ icon: "󰏫", tip: "Edit", act: "edit" })
+                if (root.canDelete) a.push({ icon: "󰆴", tip: "Delete", act: "delete" })
+                return a
+              }
+              delegate: Rectangle {
+                required property var modelData
+                width: Style.space(26); height: Style.space(26)
+                radius: Style.space(5)
+                color: aMouse.containsMouse ? root.hover : "transparent"
+                Text { textFormat: Text.PlainText; anchors.centerIn: parent; text: parent.modelData.icon; color: root.fg; font.family: root.fontFamily; font.pixelSize: Style.font.icon }
+                MouseArea {
+                  id: aMouse
+                  anchors.fill: parent
+                  hoverEnabled: true
+                  cursorShape: Qt.PointingHandCursor
+                  onClicked: {
+                    var act = parent.modelData.act
+                    if (act === "reply") root.replyRequested()
+                    else if (act === "thread") root.threadRequested()
+                    else if (act === "edit") root.editRequested()
+                    else if (act === "delete") root.deleteRequested()
+                    else root.paletteOpen = !root.paletteOpen
+                  }
                 }
               }
             }

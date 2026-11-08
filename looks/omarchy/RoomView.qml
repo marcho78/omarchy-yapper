@@ -118,6 +118,14 @@ Item {
 
     ListView {
       id: msgList
+      WheelScroll {
+      flickable: msgList
+      // Wheeling up is the user taking the list, so stop following the end;
+      // otherwise the settle pass after opening or restoring pulls it back.
+      onStepped: function(dy) {
+        if (dy > 0) { session.stickToEnd = false; settle.stop() }
+      }
+    }
       width: parent.width
       // Fill mode: whatever the rows below leave over (a Column skips
       // invisible and zero-height children, so count only the rest).
@@ -193,12 +201,13 @@ Item {
         linkPreviews: root.service ? root.service.linkPreviews : true
         reactions: JSON.parse(model.reactionsJson)
         readBy: JSON.parse(model.readByJson)
+        pending: model.pending
         onReactRequested: function(key) { session.toggleReaction(model.eventId, key) }
         onDeleteRequested: session.confirmDelete = { event_id: model.eventId, body: model.body }
         highlighted: index === session.flashIndex
         canEdit: model.mine && !model.attachmentJson && !model.deleted
         canDelete: model.mine && !model.deleted
-        onReplyRequested: session.startReply({ event_id: model.eventId, sender_name: model.senderName, body: model.body })
+        onReplyRequested: session.startReply({ event_id: model.eventId, sender: model.sender, sender_name: model.senderName, body: model.body })
         onEditRequested: session.startEdit({ event_id: model.eventId, body: model.body })
         onJumpRequested: function(id) { session.jumpTo(id) }
         threadInfo: model.threadJson !== "" ? JSON.parse(model.threadJson) : null

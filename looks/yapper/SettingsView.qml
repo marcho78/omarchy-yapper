@@ -189,6 +189,7 @@ Item {
   // ---------- content ----------
   Flickable {
     id: content
+    WheelScroll { flickable: content }
     anchors.left: nav.right
     anchors.right: parent.right
     anchors.top: parent.top
