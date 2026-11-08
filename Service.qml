@@ -2,6 +2,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import qs.Commons
+import qs.Commons as Commons
 import "shared/Format.js" as Format
 import "shared/Palettes.js" as Palettes
 
@@ -100,19 +101,19 @@ Item {
   function pickColor(key, fallback) { var v = setting(key, ""); return isHex(v) ? Qt.color(String(v).trim()) : fallback }
   function isThemeColor(key) { return !isHex(setting(key, "")) }
   // Color.background is opaque; popups.background carries the theme's popup alpha.
-  readonly property color bg: pickColor("backgroundColor", Color.background)
+  readonly property color bg: pickColor("backgroundColor", Commons.Color.background)
   readonly property color sidebarBg: pickColor("sidebarColor", bg)
-  readonly property color fg: pickColor("textColor", Color.foreground)
-  readonly property color accent: pickColor("accentColor", Color.accent)
-  readonly property color selection: pickColor("selectionColor", Color.menu.selectedBackground)
-  readonly property color hover: pickColor("hoverColor", Util.alpha(Color.menu.selectedBackground, 0.5))
+  readonly property color fg: pickColor("textColor", Commons.Color.foreground)
+  readonly property color accent: pickColor("accentColor", Commons.Color.accent)
+  readonly property color selection: pickColor("selectionColor", Commons.Color.menu.selectedBackground)
+  readonly property color hover: pickColor("hoverColor", Util.alpha(Commons.Color.menu.selectedBackground, 0.5))
   // Offered as swatches in the picker.
   readonly property var themeSwatches: [
-    { label: "Theme background", color: Color.background },
-    { label: "Theme foreground", color: Color.foreground },
-    { label: "Theme accent", color: Color.accent },
-    { label: "Theme muted", color: Color.muted },
-    { label: "Theme urgent", color: Color.urgent }
+    { label: "Theme background", color: Commons.Color.background },
+    { label: "Theme foreground", color: Commons.Color.foreground },
+    { label: "Theme accent", color: Commons.Color.accent },
+    { label: "Theme muted", color: Commons.Color.muted },
+    { label: "Theme urgent", color: Commons.Color.urgent }
   ]
   readonly property bool bubbles: String(setting("messageStyle", "flat")) === "bubbles"
   readonly property bool showAvatars: flag("showAvatars", true)
@@ -138,7 +139,7 @@ Item {
   // Every palette a picker can offer, built-ins first.
   readonly property var paletteKeys: Palettes.order.concat(customPalettes.map(function(p) { return "custom:" + p.id }))
   function paletteFor(key) {
-    if (key === "omarchy") return Palettes.omarchy(Color.background, Color.foreground, Color.accent, Color.urgent)
+    if (key === "omarchy") return Palettes.omarchy(Commons.Color.background, Commons.Color.foreground, Commons.Color.accent, Commons.Color.urgent)
     if (String(key).indexOf("custom:") === 0) return customPalette(key)
     return Palettes.themes[key] || null
   }

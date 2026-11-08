@@ -1,5 +1,6 @@
 import QtQuick
 import qs.Commons
+import qs.Commons as Commons
 import qs.Ui
 import "../../shared"
 
@@ -9,7 +10,7 @@ import "../../shared"
 Rectangle {
   id: root
   property var service: null
-  property color fg: Color.foreground
+  property color fg: Commons.Color.foreground
   property string fontFamily: Style.font.family
   property bool busy: false
   property string errorText: ""
@@ -20,9 +21,9 @@ Rectangle {
   width: parent ? parent.width : 300
   implicitHeight: visible ? col.implicitHeight + Style.space(24) : 0
   radius: Style.space(10)
-  color: Util.alpha(service ? service.accent : Color.accent, 0.08)
+  color: Util.alpha(service ? service.accent : Commons.Color.accent, 0.08)
   border.width: 1
-  border.color: Util.alpha(service ? service.accent : Color.accent, 0.4)
+  border.color: Util.alpha(service ? service.accent : Commons.Color.accent, 0.4)
 
   Column {
     id: col
@@ -33,7 +34,7 @@ Rectangle {
     spacing: Style.space(8)
     Row {
       spacing: Style.space(8)
-      Text { textFormat: Text.PlainText; text: "󰀏"; color: root.service ? root.service.accent : Color.accent; font.family: root.fontFamily; font.pixelSize: Style.font.title }
+      Text { textFormat: Text.PlainText; text: "󰀏"; color: root.service ? root.service.accent : Commons.Color.accent; font.family: root.fontFamily; font.pixelSize: Style.font.title }
       Text {
         anchors.verticalCenter: parent.verticalCenter
         text: "Join the Omarchy community?"
@@ -57,7 +58,7 @@ Rectangle {
       visible: root.errorText !== ""
       wrapMode: Text.WordWrap
       text: root.errorText
-      color: Color.urgent
+      color: Commons.Color.urgent
       font.family: root.fontFamily; font.pixelSize: Style.font.caption
     }
     Row {

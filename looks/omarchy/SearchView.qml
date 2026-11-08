@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import qs.Commons
+import qs.Commons as Commons
 import qs.Ui
 import "../../shared"
 import "../../shared/Format.js" as Format
@@ -11,7 +12,7 @@ import "../../shared/Format.js" as Format
 Item {
   id: root
   property var service: null
-  property color fg: Color.foreground
+  property color fg: Commons.Color.foreground
   property string fontFamily: Style.font.family
   property string roomId: ""         // scope when `inRoom`
   property string roomName: ""
@@ -27,7 +28,7 @@ Item {
   signal openMessage(string roomId, string eventId)
 
   readonly property bool hasTextFocus: field.activeFocus
-  readonly property color accent: service ? service.accent : Color.accent
+  readonly property color accent: service ? service.accent : Commons.Color.accent
 
   function focusField() { field.forceActiveFocus(); field.selectAll() }
   // Focus cannot be taken while the pane is still hidden; take it once shown.
@@ -87,7 +88,7 @@ Item {
         if (root.stats.scanned_rooms > 0) parts.push(root.stats.scanned_rooms + " encrypted room" + (root.stats.scanned_rooms === 1 ? "" : "s") + " scanned locally — the last " + root.stats.scanned_messages + " messages")
         return parts.join("  ·  ")
       }
-      color: root.errorText !== "" ? Color.urgent : root.fg
+      color: root.errorText !== "" ? Commons.Color.urgent : root.fg
       opacity: root.errorText !== "" ? 1 : 0.6
       font.family: root.fontFamily; font.pixelSize: Style.font.caption
     }

@@ -3,6 +3,7 @@ import QtQuick.Controls
 import Quickshell
 import Quickshell.Io
 import qs.Commons
+import qs.Commons as Commons
 import "../../shared"
 import "../../shared/Palettes.js" as Palettes
 import "../../shared/Format.js" as Format
@@ -432,12 +433,12 @@ Item {
           visible: root.service && root.service.look === "omarchy"
           readonly property bool hasTextFocus: bgRow.hasTextFocus || sbRow.hasTextFocus || fgRow.hasTextFocus || acRow.hasTextFocus || hvRow.hasTextFocus || slRow.hasTextFocus
           Note { text: "The Omarchy look follows the desktop theme. Leave a color empty to keep the theme's; set one and it overrides that slot only."; bottomPadding: ui.px(6) }
-          ColorRow { id: bgRow; key: "backgroundColor"; label: "Window background"; description: "The window and popup surface"; fallback: Color.background }
-          ColorRow { id: sbRow; key: "sidebarColor"; label: "Sidebar background"; description: "The room list"; fallback: Color.background }
-          ColorRow { id: fgRow; key: "textColor"; label: "Text"; description: "Message and interface text"; fallback: Color.foreground }
-          ColorRow { id: acRow; key: "accentColor"; label: "Accent"; description: "Links, your name, unread badges"; fallback: Color.accent }
-          ColorRow { id: hvRow; key: "hoverColor"; label: "Hover highlight"; description: "Rows and messages under the pointer"; fallback: Color.menu.selectedBackground }
-          ColorRow { id: slRow; key: "selectionColor"; label: "Selection"; description: "The open room in the list"; fallback: Color.menu.selectedBackground }
+          ColorRow { id: bgRow; key: "backgroundColor"; label: "Window background"; description: "The window and popup surface"; fallback: Commons.Color.background }
+          ColorRow { id: sbRow; key: "sidebarColor"; label: "Sidebar background"; description: "The room list"; fallback: Commons.Color.background }
+          ColorRow { id: fgRow; key: "textColor"; label: "Text"; description: "Message and interface text"; fallback: Commons.Color.foreground }
+          ColorRow { id: acRow; key: "accentColor"; label: "Accent"; description: "Links, your name, unread badges"; fallback: Commons.Color.accent }
+          ColorRow { id: hvRow; key: "hoverColor"; label: "Hover highlight"; description: "Rows and messages under the pointer"; fallback: Commons.Color.menu.selectedBackground }
+          ColorRow { id: slRow; key: "selectionColor"; label: "Selection"; description: "The open room in the list"; fallback: Commons.Color.menu.selectedBackground }
         }
       }
 

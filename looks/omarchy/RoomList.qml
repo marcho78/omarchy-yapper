@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import qs.Commons
+import qs.Commons as Commons
 import qs.Ui
 import "../../shared"
 import "../../shared/Format.js" as Format
@@ -10,10 +11,10 @@ import "../../shared/Format.js" as Format
 Column {
   id: root
   property var service: null
-  property color fg: Color.foreground
-  property color accent: service ? service.accent : Color.accent
-  property color hover: service ? service.hover : Util.alpha(Color.menu.selectedBackground, 0.5)
-  property color selection: service ? service.selection : Color.menu.selectedBackground
+  property color fg: Commons.Color.foreground
+  property color accent: service ? service.accent : Commons.Color.accent
+  property color hover: service ? service.hover : Util.alpha(Commons.Color.menu.selectedBackground, 0.5)
+  property color selection: service ? service.selection : Commons.Color.menu.selectedBackground
   property string fontFamily: Style.font.family
   property string currentRoom: ""     // highlighted row, if any
   property bool busy: false
@@ -436,14 +437,14 @@ Column {
           anchors.bottomMargin: Style.space(2)
           width: Style.space(13); height: width
           radius: width / 2
-          color: root.service ? root.service.sidebarBg : Color.background
+          color: root.service ? root.service.sidebarBg : Commons.Color.background
           // A bridged room wears its network's logo; the lock only applies
           // to the Matrix leg there, so the subtitle says so instead.
           Text {
             textFormat: Text.PlainText
             anchors.centerIn: parent
             text: row.modelData.bridge ? Format.bridgeGlyph(row.modelData.bridge.protocol) : (row.modelData.encrypted ? "󰌾" : "󰌿")
-            color: row.modelData.bridge ? root.fg : (row.modelData.encrypted ? root.accent : Color.urgent)
+            color: row.modelData.bridge ? root.fg : (row.modelData.encrypted ? root.accent : Commons.Color.urgent)
             font.family: root.fontFamily; font.pixelSize: Style.space(9)
           }
         }
@@ -460,7 +461,7 @@ Column {
             textFormat: Text.PlainText
             width: parent.width - (muteGlyph.visible ? muteGlyph.implicitWidth + Style.space(6) : 0)
             text: row.modelData.name
-            color: row.selected ? Color.menu.selectedText : root.fg
+            color: row.selected ? Commons.Color.menu.selectedText : root.fg
             opacity: row.modelData.notification_mode === "mute" ? 0.6 : 1
             font.family: root.fontFamily
             font.pixelSize: Style.font.body
@@ -484,7 +485,7 @@ Column {
           text: draft !== "" ? "󰏫 " + Format.oneLine(draft)
             : via !== "" ? via + (!row.direct && row.modelData.topic ? " · " + Format.oneLine(row.modelData.topic) : "")
             : Format.oneLine(row.modelData.topic)
-          color: draft !== "" ? (root.service ? root.service.accent : Color.accent) : root.fg
+          color: draft !== "" ? (root.service ? root.service.accent : Commons.Color.accent) : root.fg
           opacity: draft !== "" ? 0.85 : 0.45
           font.family: root.fontFamily
           font.pixelSize: Style.font.caption
@@ -515,12 +516,12 @@ Column {
         width: Math.max(badgeText.implicitWidth + Style.space(10), Style.space(20))
         height: Style.space(18)
         radius: height / 2
-        color: (Number(row.modelData.highlights) || 0) > 0 ? Color.urgent : root.accent
+        color: (Number(row.modelData.highlights) || 0) > 0 ? Commons.Color.urgent : root.accent
         Text {
           id: badgeText
           anchors.centerIn: parent
           text: row.unread > 99 ? "99+" : String(row.unread)
-          color: Color.background
+          color: Commons.Color.background
           font.family: root.fontFamily
           font.pixelSize: Style.font.caption
           font.bold: true
@@ -641,7 +642,7 @@ Column {
     wrapMode: Text.WordWrap
     visible: root.errorText !== ""
     text: root.errorText
-    color: Color.urgent
+    color: Commons.Color.urgent
     font.family: root.fontFamily
     font.pixelSize: Style.font.caption
   }

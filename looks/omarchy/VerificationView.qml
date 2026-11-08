@@ -1,5 +1,6 @@
 import QtQuick
 import qs.Commons
+import qs.Commons as Commons
 import qs.Ui
 import "../../shared"
 
@@ -11,8 +12,8 @@ import "../../shared"
 Rectangle {
   id: root
   property var service: null
-  property color fg: Color.foreground
-  readonly property color accent: service ? service.accent : Color.accent
+  property color fg: Commons.Color.foreground
+  readonly property color accent: service ? service.accent : Commons.Color.accent
   property string fontFamily: Style.font.family
   property bool compact: false           // popup: fewer words
   property bool inSettings: false        // always visible; offers key reset when verified
@@ -37,9 +38,9 @@ Rectangle {
   implicitHeight: visible ? column.implicitHeight + Style.space(28) : 0
   radius: Style.space(8)
   readonly property bool verified: service ? service.deviceVerified : false
-  color: Util.alpha(Color.urgent, verified ? 0 : 0.08)
+  color: Util.alpha(Commons.Color.urgent, verified ? 0 : 0.08)
   border.width: 1
-  border.color: verified ? Util.alpha(root.fg, 0.25) : Color.urgent
+  border.color: verified ? Util.alpha(root.fg, 0.25) : Commons.Color.urgent
 
   readonly property bool hasTextFocus: keyField.activeFocus
 
@@ -123,7 +124,7 @@ Rectangle {
       Text {
         id: headerIcon
         text: root.mode === "done" || (root.verified && root.mode === "menu") ? "󰄬" : (root.mode === "key" ? "󰌆" : "󰌾")
-        color: root.mode === "done" || root.verified ? root.accent : Color.urgent
+        color: root.mode === "done" || root.verified ? root.accent : Commons.Color.urgent
         font.family: root.fontFamily
         font.pixelSize: Style.font.iconLarge
         anchors.verticalCenter: parent.verticalCenter
@@ -408,7 +409,7 @@ Rectangle {
       wrapMode: Text.WordWrap
       visible: root.errorText !== ""
       text: root.errorText
-      color: Color.urgent
+      color: Commons.Color.urgent
       font.family: root.fontFamily; font.pixelSize: Style.font.caption
     }
   }

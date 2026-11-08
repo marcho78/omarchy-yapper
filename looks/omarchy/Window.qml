@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import Quickshell
 import qs.Commons
+import qs.Commons as Commons
 import qs.Ui
 import "../../shared"
 import "../../shared/Format.js" as Format
@@ -23,8 +24,8 @@ Item {
   property bool closingFromHost: false
 
   readonly property bool loggedIn: service ? service.loggedIn : false
-  readonly property color fg: service ? service.fg : Color.foreground
-  readonly property color bg: service ? service.bg : Color.popups.background
+  readonly property color fg: service ? service.fg : Commons.Color.foreground
+  readonly property color bg: service ? service.bg : Commons.Color.popups.background
   readonly property color sidebarBg: service ? service.sidebarBg : bg
   readonly property string fontFamily: Style.font.family
   readonly property bool inRoom: roomView.roomId !== ""
@@ -166,7 +167,7 @@ Item {
           anchors.top: parent.top
           anchors.bottom: parent.bottom
           width: 1
-          color: Color.popups.border
+          color: Commons.Color.popups.border
           opacity: 0.4
         }
 
@@ -198,7 +199,7 @@ Item {
                 width: parent.width
                 text: "v" + (root.service ? root.service.pluginVersion : "") + "  ·  daemon " + (root.service && root.service.daemonVersion ? root.service.daemonVersion : "—")
                   + (root.service && root.service.updateAvailable ? "  ·  󰚰 update" : "")
-                color: root.service && root.service.updateAvailable ? Color.accent : root.fg
+                color: root.service && root.service.updateAvailable ? Commons.Color.accent : root.fg
                 opacity: root.service && root.service.updateAvailable ? 1 : 0.4
                 font.family: root.fontFamily; font.pixelSize: Style.font.caption
                 elide: Text.ElideRight
@@ -484,7 +485,7 @@ Item {
             anchors.top: parent.top
             anchors.bottom: parent.bottom
             width: 1
-            color: Color.popups.border
+            color: Commons.Color.popups.border
             opacity: 0.4
           }
           Column {
@@ -591,7 +592,7 @@ Item {
                     ? Format.bridgeGlyph(bridge.protocol) + " via " + bridge.name + (roomView.encrypted ? " · 󰌾 encrypted to the bridge, not end to end" : " · 󰌿 not encrypted")
                     : (roomView.encrypted ? "󰌾 End-to-end encrypted" : "󰌿 Not encrypted"))
                   + (roomView.room && roomView.room.topic ? " · " + Format.oneLine(roomView.room.topic) : "")
-                color: roomView.encrypted || bridge ? root.fg : Color.urgent
+                color: roomView.encrypted || bridge ? root.fg : Commons.Color.urgent
                 opacity: 0.7
                 font.family: root.fontFamily; font.pixelSize: Style.font.caption
                 elide: Text.ElideRight

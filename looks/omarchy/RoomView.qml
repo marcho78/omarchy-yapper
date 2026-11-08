@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import qs.Commons
+import qs.Commons as Commons
 import qs.Ui
 import "../../shared"
 import "../../shared/Format.js" as Format
@@ -16,7 +17,7 @@ Item {
   id: root
   property var service: null
   property string viewId: "room"
-  property color fg: Color.foreground
+  property color fg: Commons.Color.foreground
   property string fontFamily: Style.font.family
   property bool showLeave: true
   property real timelineHeight: Style.space(340)
@@ -96,9 +97,9 @@ Item {
     visible: drop.containsDrag
     z: 10
     radius: Style.space(8)
-    color: Util.alpha(root.service ? root.service.accent : Color.accent, 0.12)
+    color: Util.alpha(root.service ? root.service.accent : Commons.Color.accent, 0.12)
     border.width: 2
-    border.color: root.service ? root.service.accent : Color.accent
+    border.color: root.service ? root.service.accent : Commons.Color.accent
     Text {
       anchors.centerIn: parent
       text: "󰁦  Drop to send" + (root.encrypted ? " (encrypted)" : "")
@@ -206,9 +207,9 @@ Item {
         isThreadRoot: root.inThread && model.eventId === root.threadRoot
         onThreadRequested: root.threadRequested(model.eventId)
         fg: root.fg
-        accent: root.service ? root.service.accent : Color.accent
-        bg: root.service ? root.service.bg : Color.popups.background
-        hover: root.service ? root.service.hover : Util.alpha(Color.foreground, 0.05)
+        accent: root.service ? root.service.accent : Commons.Color.accent
+        bg: root.service ? root.service.bg : Commons.Color.popups.background
+        hover: root.service ? root.service.hover : Util.alpha(Commons.Color.foreground, 0.05)
         bubbles: root.service ? root.service.bubbles : false
         showAvatars: root.service ? root.service.showAvatars : true
         senderColors: root.service ? root.service.senderColors : true
@@ -263,9 +264,9 @@ Item {
       visible: session.confirmDelete !== null
       implicitHeight: visible ? delRow.implicitHeight + Style.space(12) : 0
       radius: Style.space(8)
-      color: Util.alpha(Color.urgent, 0.12)
+      color: Util.alpha(Commons.Color.urgent, 0.12)
       border.width: 1
-      border.color: Color.urgent
+      border.color: Commons.Color.urgent
       Row {
         id: delRow
         anchors.left: parent.left
@@ -304,7 +305,7 @@ Item {
       visible: session.replyTo !== null || session.editing !== null
       implicitHeight: visible ? stripRow.implicitHeight + Style.space(12) : 0
       radius: Style.space(8)
-      color: Util.alpha(root.service ? root.service.accent : Color.accent, 0.1)
+      color: Util.alpha(root.service ? root.service.accent : Commons.Color.accent, 0.1)
       Row {
         id: stripRow
         anchors.left: parent.left
@@ -316,7 +317,7 @@ Item {
         Text {
           anchors.verticalCenter: parent.verticalCenter
           text: session.editing ? "󰏫" : "󰑚"
-          color: root.service ? root.service.accent : Color.accent
+          color: root.service ? root.service.accent : Commons.Color.accent
           font.family: root.fontFamily; font.pixelSize: Style.font.icon
         }
         Column {
@@ -325,7 +326,7 @@ Item {
           spacing: Style.space(1)
           Text {
             text: session.editing ? "Editing message" : ("Replying to " + (session.replyTo ? session.replyTo.sender_name : ""))
-            color: root.service ? root.service.accent : Color.accent
+            color: root.service ? root.service.accent : Commons.Color.accent
             font.family: root.fontFamily; font.pixelSize: Style.font.caption; font.bold: true
           }
           Text {
@@ -379,9 +380,9 @@ Item {
         width: parent.width - sendButton.width - attachButton.width - cancelRecord.width - 3 * Style.spacing.controlGap
         height: composer.implicitHeight
         radius: Style.cornerRadius
-        color: Util.alpha(Color.urgent, 0.10)
+        color: Util.alpha(Commons.Color.urgent, 0.10)
         border.width: 1
-        border.color: Util.alpha(Color.urgent, 0.5)
+        border.color: Util.alpha(Commons.Color.urgent, 0.5)
         // The composer is hidden meanwhile, so the strip takes the keys.
         Keys.onPressed: function(event) {
           if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) { event.accepted = true; session.stopVoice(true) }
@@ -398,7 +399,7 @@ Item {
             id: recordDot
             anchors.verticalCenter: parent.verticalCenter
             width: Style.space(10); height: width; radius: width / 2
-            color: Color.urgent
+            color: Commons.Color.urgent
             SequentialAnimation on opacity {
               loops: Animation.Infinite
               running: session.recordingHere
@@ -432,7 +433,7 @@ Item {
         width: parent.width - sendButton.width - attachButton.width - emojiButton.width - micButton.width - 4 * Style.spacing.controlGap
         maximumLength: 4000
         foreground: root.fg
-        accent: root.service ? root.service.accent : Color.accent
+        accent: root.service ? root.service.accent : Commons.Color.accent
         placeholderText: session.uploads > 0 ? "Sending " + session.uploads + " file" + (session.uploads === 1 ? "" : "s") + "…"
           : session.editing ? "Edit your message…" : session.replyTo ? "Write a reply…"
           : session.inThread ? "Reply in thread…"
@@ -461,7 +462,7 @@ Item {
       visible: session.errorText !== ""
       height: visible ? implicitHeight : 0
       text: session.errorText
-      color: Color.urgent
+      color: Commons.Color.urgent
       font.family: root.fontFamily
       font.pixelSize: Style.font.caption
     }
@@ -500,7 +501,7 @@ Item {
     width: Math.min(msgList.width, hintRow.implicitWidth + Style.space(12))
     height: Style.space(48)
     radius: Style.space(10)
-    color: root.service ? root.service.bg : Color.background
+    color: root.service ? root.service.bg : Commons.Color.background
     border.width: 1
     border.color: Util.alpha(root.fg, 0.25)
     Row {
@@ -515,10 +516,10 @@ Item {
           width: Math.max(hintLabel.implicitWidth, Style.space(40)) + Style.space(10)
           height: Style.space(40)
           radius: Style.space(7)
-          color: index === session.emojiIndex ? Util.alpha(root.service ? root.service.accent : Color.accent, 0.22)
+          color: index === session.emojiIndex ? Util.alpha(root.service ? root.service.accent : Commons.Color.accent, 0.22)
                : (hintMouse.containsMouse ? (root.service ? root.service.hover : Util.alpha(root.fg, 0.06)) : "transparent")
           border.width: index === session.emojiIndex ? 1 : 0
-          border.color: root.service ? root.service.accent : Color.accent
+          border.color: root.service ? root.service.accent : Commons.Color.accent
           Column {
             id: hintCol
             anchors.centerIn: parent
@@ -547,12 +548,12 @@ Item {
     width: pillText.implicitWidth + Style.space(28)
     height: Style.space(32)
     radius: height / 2
-    color: root.service ? root.service.accent : Color.accent
+    color: root.service ? root.service.accent : Commons.Color.accent
     Text {
       id: pillText
       anchors.centerIn: parent
       text: "󰁅  " + session.pendingNew + " new message" + (session.pendingNew === 1 ? "" : "s")
-      color: root.service ? root.service.bg : Color.background
+      color: root.service ? root.service.bg : Commons.Color.background
       font.family: root.fontFamily
       font.pixelSize: Style.font.caption
       font.bold: true

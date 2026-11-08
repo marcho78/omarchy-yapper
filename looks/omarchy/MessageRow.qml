@@ -3,6 +3,7 @@ import QtQuick.Effects
 import QtMultimedia
 import Quickshell
 import qs.Commons
+import qs.Commons as Commons
 import qs.Ui
 import "../../shared"
 import "../../shared/Format.js" as Format
@@ -73,10 +74,10 @@ Item {
   signal deleteRequested()
   signal reactRequested(string key)
   signal jumpRequested(string eventId)
-  property color fg: Color.foreground
-  property color accent: Color.accent
-  property color bg: Color.popups.background
-  property color hover: Util.alpha(Color.foreground, 0.05)
+  property color fg: Commons.Color.foreground
+  property color accent: Commons.Color.accent
+  property color bg: Commons.Color.popups.background
+  property color hover: Util.alpha(Commons.Color.foreground, 0.05)
   property string fontFamily: Style.font.family
   property bool bubbles: false
   property bool showAvatars: true
@@ -214,7 +215,7 @@ Item {
         anchors.leftMargin: -Style.space(6)
         anchors.rightMargin: -Style.space(6)
         radius: Style.space(4)
-        color: root.highlighted ? Util.alpha(root.accent, 0.18) : root.mention ? Util.alpha(Color.urgent, 0.08) : (rowMouse.containsMouse && !root.bubbles ? root.hover : "transparent")
+        color: root.highlighted ? Util.alpha(root.accent, 0.18) : root.mention ? Util.alpha(Commons.Color.urgent, 0.08) : (rowMouse.containsMouse && !root.bubbles ? root.hover : "transparent")
         Behavior on color { ColorAnimation { duration: 200 } }
       }
       // Mentions get a bar on the left, like Element
@@ -226,7 +227,7 @@ Item {
         anchors.bottom: parent.bottom
         width: 3
         radius: 2
-        color: Color.urgent
+        color: Commons.Color.urgent
       }
       MouseArea {
         id: rowMouse
@@ -374,7 +375,7 @@ Item {
             anchors.baseline: parent.children[0].baseline
             readonly property bool flag: root.roomEncrypted && !root.encrypted
             text: Qt.formatTime(new Date(root.ts), "HH:mm") + (root.edited ? "  (edited)" : "") + (flag ? "  󰌿 unencrypted" : "")
-            color: flag ? Color.urgent : root.fg
+            color: flag ? Commons.Color.urgent : root.fg
             opacity: flag ? 0.8 : 0.45
             font.family: root.fontFamily
             font.pixelSize: root.captionSize
@@ -911,15 +912,15 @@ Item {
                 width: chipTipText.implicitWidth + 12
                 height: chipTipText.implicitHeight + 6
                 radius: 4
-                color: Color.tooltip.background
-                border.color: Color.tooltip.border
+                color: Commons.Color.tooltip.background
+                border.color: Commons.Color.tooltip.border
                 border.width: 1
                 Text {
                   textFormat: Text.PlainText
                   id: chipTipText
                   anchors.centerIn: parent
                   text: parent.parent.modelData.senders.map(function(u) { return u.name }).join(", ")
-                  color: Color.tooltip.text
+                  color: Commons.Color.tooltip.text
                   font.family: root.fontFamily; font.pixelSize: Style.font.caption
                 }
               }
@@ -971,15 +972,15 @@ Item {
             width: seenText.implicitWidth + 12
             height: seenText.implicitHeight + 6
             radius: 4
-            color: Color.tooltip.background
-            border.color: Color.tooltip.border
+            color: Commons.Color.tooltip.background
+            border.color: Commons.Color.tooltip.border
             border.width: 1
             Text {
               textFormat: Text.PlainText
               id: seenText
               anchors.centerIn: parent
               text: "Seen by " + root.readBy.map(function(u) { return u.name }).join(", ")
-              color: Color.tooltip.text
+              color: Commons.Color.tooltip.text
               font.family: root.fontFamily; font.pixelSize: Style.font.caption
             }
           }
@@ -991,7 +992,7 @@ Item {
           visible: root.bubbles && root.mine && (root.header || root.edited)
           anchors.right: parent.right
           text: Qt.formatTime(new Date(root.ts), "HH:mm") + (root.edited ? "  (edited)" : "") + (root.roomEncrypted && !root.encrypted ? "  󰌿" : "")
-          color: root.roomEncrypted && !root.encrypted ? Color.urgent : root.fg
+          color: root.roomEncrypted && !root.encrypted ? Commons.Color.urgent : root.fg
           opacity: 0.45
           font.family: root.fontFamily
           font.pixelSize: root.captionSize

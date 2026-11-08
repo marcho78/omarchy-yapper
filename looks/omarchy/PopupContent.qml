@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import Quickshell
 import qs.Commons
+import qs.Commons as Commons
 import qs.Ui
 import "../../shared"
 import "../../shared/Format.js" as Format
@@ -61,7 +62,7 @@ Column {
     Text {
       id: heroIcon
       text: (root.inRoom || root.showSettings || root.showInfo) ? "󰁍" : root.glyph
-      color: root.loggedIn ? Color.accent : root.bar.foreground
+      color: root.loggedIn ? Commons.Color.accent : root.bar.foreground
       font.family: root.bar.fontFamily
       font.pixelSize: Style.font.display
       anchors.left: parent.left
@@ -101,7 +102,7 @@ Column {
           : root.inRoom && roomView.room && roomView.room.bridge ? Format.bridgeGlyph(roomView.room.bridge.protocol) + " via " + roomView.room.bridge.name + (roomView.encrypted ? " · encrypted to the bridge" : " · not encrypted")
           : root.inRoom ? (roomView.encrypted ? "󰌾 End-to-end encrypted" : "󰌿 Not encrypted")
           : root.stateText
-        color: root.inRoom && !roomView.encrypted ? Color.urgent : root.bar.foreground
+        color: root.inRoom && !roomView.encrypted ? Commons.Color.urgent : root.bar.foreground
         opacity: 0.7
         font.family: root.bar.fontFamily
         font.pixelSize: Style.font.caption

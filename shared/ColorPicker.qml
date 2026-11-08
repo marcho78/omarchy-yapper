@@ -1,5 +1,6 @@
 import QtQuick
 import qs.Commons
+import qs.Commons as Commons
 import qs.Ui
 
 // A color picker: hue bar, saturation/value square, theme swatches and a
@@ -9,7 +10,7 @@ Column {
   id: root
   property color value: "#888888"
   property string fontFamily: Style.font.family
-  property color fg: Color.foreground
+  property color fg: Commons.Color.foreground
   property var swatches: []      // [{ label, color }]
 
   signal picked(string hex)
@@ -145,7 +146,7 @@ Column {
         radius: Style.space(8)
         color: modelData.color
         border.width: String(Qt.color(modelData.color)) === root.hex ? 2 : 1
-        border.color: String(Qt.color(modelData.color)) === root.hex ? Color.accent : Util.alpha(root.fg, 0.35)
+        border.color: String(Qt.color(modelData.color)) === root.hex ? Commons.Color.accent : Util.alpha(root.fg, 0.35)
         MouseArea {
           anchors.fill: parent
           hoverEnabled: true
@@ -163,10 +164,10 @@ Column {
           width: tipText.implicitWidth + 12
           height: tipText.implicitHeight + 6
           radius: 4
-          color: Color.tooltip.background
-          border.color: Color.tooltip.border
+          color: Commons.Color.tooltip.background
+          border.color: Commons.Color.tooltip.border
           border.width: 1
-          Text { textFormat: Text.PlainText; id: tipText; anchors.centerIn: parent; text: String(parent.parent.modelData.label); color: Color.tooltip.text; font.family: root.fontFamily; font.pixelSize: Style.font.caption }
+          Text { textFormat: Text.PlainText; id: tipText; anchors.centerIn: parent; text: String(parent.parent.modelData.label); color: Commons.Color.tooltip.text; font.family: root.fontFamily; font.pixelSize: Style.font.caption }
         }
       }
     }

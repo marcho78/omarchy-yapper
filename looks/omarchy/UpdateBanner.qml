@@ -1,5 +1,6 @@
 import QtQuick
 import qs.Commons
+import qs.Commons as Commons
 import qs.Ui
 import "../../shared"
 import "../../shared/Format.js" as Format
@@ -8,7 +9,7 @@ import "../../shared/Format.js" as Format
 Rectangle {
   id: root
   property var service: null
-  property color fg: Color.foreground
+  property color fg: Commons.Color.foreground
   property string fontFamily: Style.font.family
 
   readonly property bool daemon: service ? service.daemonUpdateAvailable : false
@@ -16,9 +17,9 @@ Rectangle {
   visible: daemon || plugin
   implicitHeight: visible ? column.implicitHeight + Style.space(24) : 0
   radius: Style.space(8)
-  color: Util.alpha(service ? service.accent : Color.accent, 0.12)
+  color: Util.alpha(service ? service.accent : Commons.Color.accent, 0.12)
   border.width: 1
-  border.color: service ? service.accent : Color.accent
+  border.color: service ? service.accent : Commons.Color.accent
 
   Column {
     id: column

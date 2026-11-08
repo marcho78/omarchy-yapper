@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import qs.Commons
+import qs.Commons as Commons
 import qs.Ui
 
 // The message box: a multi-line input styled like the shell's TextField.
@@ -9,8 +10,8 @@ import qs.Ui
 Item {
   id: root
 
-  property color foreground: Color.foreground
-  property color accent: Color.accent
+  property color foreground: Commons.Color.foreground
+  property color accent: Commons.Color.accent
   property int maxLines: 6
   // The Omarchy look draws the shell's field frame; a look with its own
   // frame turns this off and sets the paddings and fonts itself.

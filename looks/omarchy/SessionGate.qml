@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import qs.Commons
+import qs.Commons as Commons
 import qs.Ui
 import "../../shared"
 import "../../shared/Format.js" as Format
@@ -11,7 +12,7 @@ import "../../shared/Format.js" as Format
 Column {
   id: root
   property var service: null
-  property color fg: Color.foreground
+  property color fg: Commons.Color.foreground
   property string fontFamily: Style.font.family
   property bool usePassword: false
   property bool busy: false
@@ -71,7 +72,7 @@ Column {
         width: parent.width
         wrapMode: Text.WordWrap
         text: missing.st ? ("omarchy-yapperd " + missing.st.version + " — " + (parent.finished ? "installed in " + Format.clock(root.service.installElapsed) : parent.failed ? "did not finish: " + (root.service.installStale ? "no news from the terminal" : missing.st.error) : parent.compiling ? "compiling " + missing.st.done + " of " + missing.st.total + " crates, " + Math.round(100 * missing.st.done / missing.st.total) + "%" : missing.st.phase) + "  ·  " + Format.clock(root.service.installElapsed)) : ""
-        color: parent.failed ? Color.urgent : root.fg
+        color: parent.failed ? Commons.Color.urgent : root.fg
         font.family: root.fontFamily
         font.pixelSize: Style.font.body
       }
@@ -80,7 +81,7 @@ Column {
         height: Style.space(6)
         radius: Style.space(3)
         color: Util.alpha(root.fg, 0.15)
-        Rectangle { anchors.left: parent.left; anchors.top: parent.top; anchors.bottom: parent.bottom; radius: Style.space(3); color: parent.parent.failed ? Color.urgent : Color.accent; width: parent.parent.finished || parent.parent.failed ? parent.width : parent.parent.compiling ? parent.width * Math.min(1, missing.st.done / missing.st.total) : 0 }
+        Rectangle { anchors.left: parent.left; anchors.top: parent.top; anchors.bottom: parent.bottom; radius: Style.space(3); color: parent.parent.failed ? Commons.Color.urgent : Commons.Color.accent; width: parent.parent.finished || parent.parent.failed ? parent.width : parent.parent.compiling ? parent.width * Math.min(1, missing.st.done / missing.st.total) : 0 }
       }
       Flow {
         width: parent.width
@@ -118,7 +119,7 @@ Column {
       visible: root.service && root.service.startError !== ""
       wrapMode: Text.WordWrap
       text: root.service ? root.service.startError : ""
-      color: Color.urgent
+      color: Commons.Color.urgent
       font.family: root.fontFamily
       font.pixelSize: Style.font.caption
     }
@@ -285,7 +286,7 @@ Column {
     wrapMode: Text.WordWrap
     visible: root.errorText !== ""
     text: root.errorText
-    color: Color.urgent
+    color: Commons.Color.urgent
     font.family: root.fontFamily
     font.pixelSize: Style.font.caption
   }

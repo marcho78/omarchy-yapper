@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import qs.Commons
+import qs.Commons as Commons
 import qs.Ui
 import "../../shared"
 
@@ -10,7 +11,7 @@ import "../../shared"
 Column {
   id: root
   property var service: null
-  property color fg: Color.foreground
+  property color fg: Commons.Color.foreground
   property string fontFamily: Style.font.family
   // The color row whose picker is unfolded (one at a time). Set from a
   // deep link, or by clicking a row.
@@ -31,12 +32,12 @@ Column {
 
   function current(key, fallback) { return root.service ? root.service.setting(key, fallback) : fallback }
   function themeFallback(key) {
-    if (key === "backgroundColor") return Color.background
-    if (key === "sidebarColor") return root.service ? root.service.bg : Color.background
-    if (key === "textColor") return Color.foreground
-    if (key === "selectionColor") return Color.menu.selectedBackground
-    if (key === "hoverColor") return Util.alpha(Color.menu.selectedBackground, 0.5)
-    return Color.accent
+    if (key === "backgroundColor") return Commons.Color.background
+    if (key === "sidebarColor") return root.service ? root.service.bg : Commons.Color.background
+    if (key === "textColor") return Commons.Color.foreground
+    if (key === "selectionColor") return Commons.Color.menu.selectedBackground
+    if (key === "hoverColor") return Util.alpha(Commons.Color.menu.selectedBackground, 0.5)
+    return Commons.Color.accent
   }
 
   // About & updates — first thing in Settings.
@@ -97,7 +98,7 @@ Column {
               if (!s.lastChecked) return "Not checked yet"
               return (s.updateAvailable ? "Update available" : "Up to date") + "  ·  checked " + s.lastChecked
             }
-            color: root.service && root.service.updateError ? Color.urgent : (root.service && root.service.updateAvailable ? Color.accent : root.fg)
+            color: root.service && root.service.updateError ? Commons.Color.urgent : (root.service && root.service.updateAvailable ? Commons.Color.accent : root.fg)
             opacity: root.service && (root.service.updateError || root.service.updateAvailable) ? 1 : 0.55
             font.family: root.fontFamily
             font.pixelSize: Style.font.caption
@@ -392,7 +393,7 @@ Column {
         visible: communityCard.errorText !== ""
         wrapMode: Text.WordWrap
         text: communityCard.errorText
-        color: Color.urgent
+        color: Commons.Color.urgent
         font.family: root.fontFamily; font.pixelSize: Style.font.caption
       }
     }
@@ -560,7 +561,7 @@ Column {
             textFormat: Text.PlainText
             id: valueLabel
             text: String(slider.dragging ? Math.round(slider.liveValue) : (Number(field.value) || field.modelData.defaultValue || 0)) + (field.key === "fontScale" ? "%" : "")
-            color: Color.accent
+            color: Commons.Color.accent
             font.family: root.fontFamily
             font.pixelSize: Style.font.subtitle
           }
@@ -594,7 +595,7 @@ Column {
             color: field.pickerOpen ? (root.service ? root.service.selection : Util.alpha(root.fg, 0.06))
               : colorMouse.containsMouse ? (root.service ? root.service.hover : Util.alpha(root.fg, 0.06)) : "transparent"
             border.width: 1
-            border.color: field.pickerOpen ? Color.accent : Util.alpha(root.fg, 0.25)
+            border.color: field.pickerOpen ? Commons.Color.accent : Util.alpha(root.fg, 0.25)
           }
           Row {
             anchors.fill: parent
@@ -636,7 +637,7 @@ Column {
               id: stateLabel
               anchors.verticalCenter: parent.verticalCenter
               text: root.service && root.service.isThemeColor(field.key) ? "Theme" : String(field.value).toLowerCase()
-              color: root.service && root.service.isThemeColor(field.key) ? root.fg : Color.accent
+              color: root.service && root.service.isThemeColor(field.key) ? root.fg : Commons.Color.accent
               opacity: root.service && root.service.isThemeColor(field.key) ? 0.5 : 1
               font.family: root.fontFamily
               font.pixelSize: Style.font.caption

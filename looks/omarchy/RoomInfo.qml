@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import qs.Commons
+import qs.Commons as Commons
 import qs.Ui
 import "../../shared"
 import "../../shared/Format.js" as Format
@@ -10,7 +11,7 @@ import "../../shared/Format.js" as Format
 Item {
   id: root
   property var service: null
-  property color fg: Color.foreground
+  property color fg: Commons.Color.foreground
   property string fontFamily: Style.font.family
   property string roomId: ""
   property bool compact: false
@@ -33,7 +34,7 @@ Item {
   function fail(msg) { root.errorText = msg }
 
   readonly property bool hasTextFocus: search.activeFocus || editField.activeFocus || reasonField.activeFocus
-  readonly property color accent: service ? service.accent : Color.accent
+  readonly property color accent: service ? service.accent : Commons.Color.accent
 
   onRoomIdChanged: reload()
   function reload() {
@@ -286,9 +287,9 @@ Item {
       visible: root.confirmLeave
       implicitHeight: visible ? leaveRow.implicitHeight + Style.space(12) : 0
       radius: Style.space(8)
-      color: Util.alpha(Color.urgent, 0.12)
+      color: Util.alpha(Commons.Color.urgent, 0.12)
       border.width: 1
-      border.color: Color.urgent
+      border.color: Commons.Color.urgent
       Row {
         id: leaveRow
         anchors.left: parent.left
@@ -426,7 +427,7 @@ Item {
       visible: root.errorText !== ""
       wrapMode: Text.WordWrap
       text: root.errorText
-      color: Color.urgent
+      color: Commons.Color.urgent
       font.family: root.fontFamily; font.pixelSize: Style.font.caption
     }
 

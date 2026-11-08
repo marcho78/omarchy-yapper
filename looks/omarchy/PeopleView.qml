@@ -1,5 +1,6 @@
 import QtQuick
 import qs.Commons
+import qs.Commons as Commons
 import qs.Ui
 import "../../shared"
 import "../../shared/Format.js" as Format
@@ -9,14 +10,14 @@ import "../../shared/Format.js" as Format
 Rectangle {
   id: root
   property var service: null
-  property color fg: Color.foreground
+  property color fg: Commons.Color.foreground
   property string fontFamily: Style.font.family
   property bool compact: false
 
   signal closeRequested()
   signal messageRequested(string userId)
 
-  readonly property color accent: service ? service.accent : Color.accent
+  readonly property color accent: service ? service.accent : Commons.Color.accent
   readonly property color hover: service ? service.hover : Util.alpha(fg, 0.05)
   property var people: []
   property bool loading: false
@@ -86,7 +87,7 @@ Rectangle {
       visible: root.errorText !== ""
       wrapMode: Text.WordWrap
       text: root.errorText
-      color: Color.urgent
+      color: Commons.Color.urgent
       font.family: root.fontFamily; font.pixelSize: Style.font.caption
     }
 
