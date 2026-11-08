@@ -154,7 +154,11 @@ Item {
         anchors.left: parent.left
         anchors.top: parent.top
         anchors.bottom: parent.bottom
-        width: Math.max(Style.space(300), Math.min(Style.space(380), parent.width * 0.34))
+        clip: true
+        readonly property real minSidebarWidth: Style.space(80)
+        readonly property real maxSidebarWidth: Math.max(minSidebarWidth, parent.width - Style.space(220))
+        readonly property real targetWidth: root.service ? Style.space(root.service.sidebarWidth) : Style.space(300)
+        width: Math.round(Math.max(minSidebarWidth, Math.min(maxSidebarWidth, targetWidth)))
 
         Rectangle {
           anchors.fill: parent
@@ -165,9 +169,10 @@ Item {
           anchors.right: parent.right
           anchors.top: parent.top
           anchors.bottom: parent.bottom
-          width: 1
-          color: Color.popups.border
-          opacity: 0.4
+          width: sidebarResizer.containsMouse || sidebarResizer.pressed ? Style.space(2) : 1
+          color: sidebarResizer.containsMouse || sidebarResizer.pressed ? (root.service ? root.service.accent : Color.accent) : Color.popups.border
+          opacity: sidebarResizer.containsMouse || sidebarResizer.pressed ? 0.9 : 0.4
+          Behavior on opacity { NumberAnimation { duration: Style.duration(120); easing.type: Easing.OutCubic } }
         }
 
         Column {
@@ -217,7 +222,8 @@ Item {
                 onClicked: root.showSettings = !root.showSettings
               }
               Button {
-                text: "Sign out"
+                iconText: sidebar.width < Style.space(220) ? "󰍃" : ""
+                text: sidebar.width < Style.space(220) ? "" : "Sign out"
                 onClicked: { roomView.close(); root.service.logout() }
               }
             }
@@ -307,6 +313,42 @@ Item {
               }
             }
           }
+        }
+      }
+
+      // Draggable divider between sidebar and conversation
+      MouseArea {
+        id: sidebarResizer
+        z: 10
+        x: sidebar.width - width / 2
+        anchors.top: parent.top
+        anchors.bottom: parent.bottom
+        width: Style.space(8)
+        hoverEnabled: true
+        preventStealing: true
+        cursorShape: Qt.SplitHCursor
+        property real dragStartX: 0
+        property real dragStartWidth: 0
+        onPressed: function(mouse) {
+          dragStartX = mapToItem(parent, mouse.x, 0).x
+          dragStartWidth = sidebar.width
+        }
+        onPositionChanged: function(mouse) {
+          if (!pressed || !root.service) return
+          var curX = mapToItem(parent, mouse.x, 0).x
+          var newPx = Math.max(sidebar.minSidebarWidth, Math.min(sidebar.maxSidebarWidth, dragStartWidth + (curX - dragStartX)))
+          var scale = Style.effectiveSpacingScale > 0 ? Style.effectiveSpacingScale : 1
+          var unscaled = Math.max(80, Math.min(700, Math.round(newPx / scale)))
+          root.service.previewSetting("sidebarWidth", unscaled)
+        }
+        onReleased: {
+          if (root.service) root.service.set("sidebarWidth", root.service.sidebarWidth)
+        }
+        onCanceled: {
+          if (root.service) root.service.set("sidebarWidth", root.service.sidebarWidth)
+        }
+        onDoubleClicked: {
+          if (root.service) root.service.set("sidebarWidth", 300)
         }
       }
 
@@ -476,16 +518,45 @@ Item {
           anchors.right: parent.right
           anchors.top: parent.top
           anchors.bottom: parent.bottom
-          width: !visible ? 0 : parent.splitThreads ? Math.max(Style.space(340), Math.min(Style.space(480), parent.width * 0.42)) : parent.width
+          property real customWidth: 0
+          readonly property real minThreadWidth: Style.space(260)
+          readonly property real maxThreadWidth: Math.max(minThreadWidth, parent.width - Style.space(260))
+          readonly property real defaultThreadWidth: Math.max(Style.space(340), Math.min(Style.space(480), parent.width * 0.42))
+          width: !visible ? 0 : parent.splitThreads ? Math.round(Math.max(minThreadWidth, Math.min(maxThreadWidth, customWidth > 0 ? customWidth : defaultThreadWidth))) : parent.width
           color: "transparent"
           Rectangle {
             visible: conversation.splitThreads
             anchors.left: parent.left
             anchors.top: parent.top
             anchors.bottom: parent.bottom
-            width: 1
-            color: Color.popups.border
-            opacity: 0.4
+            width: threadResizer.containsMouse || threadResizer.pressed ? Style.space(2) : 1
+            color: threadResizer.containsMouse || threadResizer.pressed ? (root.service ? root.service.accent : Color.accent) : Color.popups.border
+            opacity: threadResizer.containsMouse || threadResizer.pressed ? 0.9 : 0.4
+            Behavior on opacity { NumberAnimation { duration: Style.duration(120); easing.type: Easing.OutCubic } }
+          }
+          MouseArea {
+            id: threadResizer
+            visible: conversation.splitThreads
+            z: 10
+            x: -width / 2
+            anchors.top: parent.top
+            anchors.bottom: parent.bottom
+            width: Style.space(8)
+            hoverEnabled: true
+            preventStealing: true
+            cursorShape: Qt.SplitHCursor
+            property real dragStartX: 0
+            property real dragStartWidth: 0
+            onPressed: function(mouse) {
+              dragStartX = mapToItem(conversation, mouse.x, 0).x
+              dragStartWidth = threadPane.width
+            }
+            onPositionChanged: function(mouse) {
+              if (!pressed) return
+              var curX = mapToItem(conversation, mouse.x, 0).x
+              threadPane.customWidth = Math.max(threadPane.minThreadWidth, Math.min(threadPane.maxThreadWidth, dragStartWidth - (curX - dragStartX)))
+            }
+            onDoubleClicked: threadPane.customWidth = 0
           }
           Column {
             anchors.fill: parent
