@@ -708,9 +708,16 @@ Item {
     return list
   }
   function refreshRooms() {
-    // Membership changes can be the community coming or going.
-    if (root.loggedIn && (root.community === null || root.community.joined !== true)) root.refreshCommunity()
-    root.request("rooms", {}, function(r) { if (r.ok) root.rooms = r.result })
+    // The room list is the first place the community shows up; ask once,
+    // not on every message (a dead space alias is slow to give up on).
+    if (root.loggedIn && root.community === null) root.refreshCommunity()
+    root.request("rooms", {}, function(r) {
+      if (!r.ok) return
+      // A new array for the same rooms resets the list's delegates; most
+      // refreshes (a receipt, a typing notice) change nothing visible.
+      if (JSON.stringify(root.rooms) === JSON.stringify(r.result)) return
+      root.rooms = r.result
+    })
   }
   function refreshInvites() { root.request("invites", {}, function(r) { if (r.ok) root.invites = r.result }) }
 
@@ -845,9 +852,19 @@ Item {
   readonly property bool communityJoined: community !== null && community.joined === true
   property var blocked: []
   property string themeName: ""
+  // One status request at a time: several views ask on open, and the status
+  // changes slowly. The daemon caches it too, but a burst of requests used to
+  // queue up behind a slow alias lookup and delay everything else.
+  property bool communityPending: false
+  property double communityAskedAt: 0
   function refreshCommunity(cb) {
     if (!root.loggedIn) { if (cb) cb({ ok: false, error: "not signed in" }); return }
+    if (root.communityPending) { if (cb) cb({ ok: false, error: "already asking" }); return }
+    if (Date.now() - root.communityAskedAt < 5000) { if (cb) cb({ ok: false, error: "asked just now" }); return }
+    root.communityPending = true
+    root.communityAskedAt = Date.now()
     root.request("community_status", { alias: root.communityAlias }, function(r) {
+      root.communityPending = false
       if (r.ok) root.community = r.result
       if (cb) cb(r)
     })

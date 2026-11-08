@@ -120,6 +120,8 @@ Item {
   }
 
   Flickable {
+    id: searchFlick
+    WheelScroll { flickable: searchFlick }
     anchors.left: parent.left
     anchors.right: parent.right
     anchors.top: header.bottom

@@ -56,6 +56,8 @@ Item {
     border.color: root.c.line
     clip: true
     Flickable {
+      id: selectFlick
+      WheelScroll { flickable: selectFlick }
       anchors.fill: parent
       anchors.margins: ui.px(4)
       contentHeight: listColumn.implicitHeight

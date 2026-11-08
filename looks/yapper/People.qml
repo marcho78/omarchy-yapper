@@ -105,6 +105,8 @@ Item {
   }
 
   Flickable {
+    id: peopleFlick
+    WheelScroll { flickable: peopleFlick }
     anchors.left: parent.left
     anchors.right: parent.right
     anchors.top: header.bottom

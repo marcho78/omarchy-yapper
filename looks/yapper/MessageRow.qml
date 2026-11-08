@@ -133,8 +133,36 @@ Item {
 
   property bool paletteOpen: false
   readonly property var quickEmoji: ["👍", "❤️", "😂", "😮", "😢", "🎉", "🔥", "👀"]
+  // A message being sent: drawn dimmed until the daemon names it.
+  property bool pending: false
+
+  // The hover bar must stay put while the pointer crosses from the message
+  // onto it. Its buttons sit inside `actionsMouse`, so hovering a button
+  // keeps that area hovered; the short grace period covers the hand-off
+  // between the row and the bar, which otherwise made the bar blink and
+  // drop the click.
+  property bool actionsOpen: false
+  function refreshActionsHover() {
+    if (!rowMouse || !actionsMouse) return
+    if (rowMouse.containsMouse || actionsMouse.containsMouse || root.paletteOpen) {
+      actionsHide.stop()
+      root.actionsOpen = true
+    } else if (!actionsHide.running) {
+      actionsHide.restart()
+    }
+  }
+  Timer {
+    id: actionsHide
+    interval: 100
+    onTriggered: if (!rowMouse.containsMouse && !actionsMouse.containsMouse && !root.paletteOpen) root.actionsOpen = false
+  }
+  onPaletteOpenChanged: refreshActionsHover()
+  onVisibleChanged: if (!visible) { actionsHide.stop(); actionsOpen = false }
 
   implicitHeight: column.implicitHeight
+  // A message that is still with the daemon: shown at once, but muted.
+  opacity: root.pending ? 0.55 : 1.0
+  Behavior on opacity { NumberAnimation { duration: 120 } }
 
   Column {
     id: column
@@ -211,10 +239,18 @@ Item {
       Rectangle {
         anchors.fill: parent
         radius: ui.px(7)
+        // The sticky `actionsOpen` is for the bar's hand-off only; painting the
+        // row from it left a trail of highlights when the pointer moved on.
         color: root.highlighted ? root.c.sel : (rowMouse.containsMouse || actionsMouse.containsMouse || root.paletteOpen ? root.c.hover : "transparent")
         Behavior on color { ColorAnimation { duration: 120 } }
       }
-      MouseArea { id: rowMouse; anchors.fill: parent; hoverEnabled: true; acceptedButtons: Qt.NoButton }
+      MouseArea {
+        id: rowMouse
+        anchors.fill: parent
+        hoverEnabled: true
+        acceptedButtons: Qt.NoButton
+        onContainsMouseChanged: root.refreshActionsHover()
+      }
 
       Avatar {
         visible: root.showAvatar
@@ -894,7 +930,7 @@ Item {
       // Hover actions
       Rectangle {
         id: actions
-        visible: (rowMouse.containsMouse || actionsMouse.containsMouse || root.paletteOpen) && !root.undecryptable && !root.deleted
+        visible: root.actionsOpen && !root.undecryptable && !root.deleted && !root.pending
         anchors.right: parent.right
         anchors.rightMargin: ui.px(10)
         anchors.top: parent.top
@@ -906,37 +942,43 @@ Item {
         color: root.c.bg2
         border.width: 1
         border.color: root.c.line
-        MouseArea { id: actionsMouse; anchors.fill: parent; hoverEnabled: true; acceptedButtons: Qt.NoButton }
-        Row {
-          id: actionsRow
-          anchors.centerIn: parent
-          spacing: ui.px(2)
-          Repeater {
-            model: {
-              var a = [{ icon: "smiley", tip: "React", act: "react" }, { icon: "arrow-bend-up-left", tip: "Reply", act: "reply" }]
-              if (!root.inThread) a.push({ icon: "tree-structure", tip: "Reply in thread", act: "thread" })
-              if (root.canEdit) a.push({ icon: "pencil-simple", tip: "Edit", act: "edit" })
-              if (root.canDelete) a.push({ icon: "trash", tip: "Delete", act: "delete" })
-              return a
-            }
-            delegate: Rectangle {
-              required property var modelData
-              width: ui.px(26); height: ui.px(26)
-              radius: ui.px(6)
-              color: actionMouse.containsMouse ? root.c.hover : "transparent"
-              Icon { anchors.centerIn: parent; name: parent.modelData.icon; size: ui.px(15); color: actionMouse.containsMouse ? (parent.modelData.act === "delete" ? root.c.bad : root.c.accent) : root.c.muted }
-              MouseArea {
-                id: actionMouse
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: {
-                  var act = parent.modelData.act
-                  if (act === "reply") root.replyRequested()
-                  else if (act === "thread") root.threadRequested()
-                  else if (act === "edit") root.editRequested()
-                  else if (act === "delete") root.deleteRequested()
-                  else root.paletteOpen = !root.paletteOpen
+        MouseArea {
+          id: actionsMouse
+          anchors.fill: parent
+          hoverEnabled: true
+          acceptedButtons: Qt.NoButton
+          onContainsMouseChanged: root.refreshActionsHover()
+          Row {
+            id: actionsRow
+            anchors.centerIn: parent
+            spacing: ui.px(2)
+            Repeater {
+              model: {
+                var a = [{ icon: "smiley", tip: "React", act: "react" }, { icon: "arrow-bend-up-left", tip: "Reply", act: "reply" }]
+                if (!root.inThread) a.push({ icon: "tree-structure", tip: "Reply in thread", act: "thread" })
+                if (root.canEdit) a.push({ icon: "pencil-simple", tip: "Edit", act: "edit" })
+                if (root.canDelete) a.push({ icon: "trash", tip: "Delete", act: "delete" })
+                return a
+              }
+              delegate: Rectangle {
+                required property var modelData
+                width: ui.px(26); height: ui.px(26)
+                radius: ui.px(6)
+                color: actionMouse.containsMouse ? root.c.hover : "transparent"
+                Icon { anchors.centerIn: parent; name: parent.modelData.icon; size: ui.px(15); color: actionMouse.containsMouse ? (parent.modelData.act === "delete" ? root.c.bad : root.c.accent) : root.c.muted }
+                MouseArea {
+                  id: actionMouse
+                  anchors.fill: parent
+                  hoverEnabled: true
+                  cursorShape: Qt.PointingHandCursor
+                  onClicked: {
+                    var act = parent.modelData.act
+                    if (act === "reply") root.replyRequested()
+                    else if (act === "thread") root.threadRequested()
+                    else if (act === "edit") root.editRequested()
+                    else if (act === "delete") root.deleteRequested()
+                    else root.paletteOpen = !root.paletteOpen
+                  }
                 }
               }
             }

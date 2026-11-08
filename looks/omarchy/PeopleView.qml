@@ -102,6 +102,7 @@ Rectangle {
 
     ListView {
       id: list
+      WheelScroll { flickable: list }
       width: parent.width
       height: parent.height - y
       clip: true

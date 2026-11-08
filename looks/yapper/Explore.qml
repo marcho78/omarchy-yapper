@@ -119,6 +119,8 @@ Item {
 
   // Rooms
   Flickable {
+    id: exploreFlick
+    WheelScroll { flickable: exploreFlick }
     anchors.left: parent.left
     anchors.right: parent.right
     anchors.top: header.bottom
