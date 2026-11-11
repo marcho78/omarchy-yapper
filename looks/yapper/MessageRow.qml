@@ -211,10 +211,10 @@ Item {
       Rectangle {
         anchors.fill: parent
         radius: ui.px(7)
-        color: root.highlighted ? root.c.sel : (rowMouse.containsMouse || actionsMouse.containsMouse || root.paletteOpen ? root.c.hover : "transparent")
+        color: root.highlighted ? root.c.sel : (rowHover.hovered || actionsHover.hovered || root.paletteOpen ? root.c.hover : "transparent")
         Behavior on color { ColorAnimation { duration: 120 } }
       }
-      MouseArea { id: rowMouse; anchors.fill: parent; hoverEnabled: true; acceptedButtons: Qt.NoButton }
+      HoverHandler { id: rowHover }
 
       Avatar {
         visible: root.showAvatar
@@ -345,21 +345,35 @@ Item {
 
               // Text
               Text {
+                id: bodyMeasure
+                visible: false
+                textFormat: Text.RichText
+                text: root.bubbles && root.hasText ? bodyText.text : ""
+                font: bodyText.font
+              }
+              TextEdit {
                 id: bodyText
                 visible: root.hasText
-                width: root.bubbles ? Math.min(implicitWidth, root.maxContent) : root.maxContent
-                textFormat: Text.RichText
-                text: (root.isAttachment ? Format.linkify(root.attachment.caption || "", root.linkColor)
-                  : (root.html !== "" ? Format.cleanHtml(root.html, root.linkColor) : Format.linkify(root.body, root.linkColor)))
+                width: root.bubbles ? Math.min(Math.ceil(bodyMeasure.implicitWidth), root.maxContent) : root.maxContent
+                readOnly: true
+                selectByMouse: true
+                persistentSelection: false
+                textFormat: TextEdit.RichText
+                text: "<div style=\"line-height:130%\">"
+                  + (root.isAttachment ? Format.linkify(root.attachment.caption || "", root.linkColor)
+                    : (root.html !== "" ? Format.cleanHtml(root.html, root.linkColor) : Format.linkify(root.body, root.linkColor)))
                   + (root.edited ? " <font color=\"" + root.c.muted + "\" size=\"2\">(edited)</font>" : "")
-                wrapMode: Text.Wrap
+                  + "</div>"
+                wrapMode: TextEdit.Wrap
                 color: root.mention ? root.c.warn : root.c.fg
-                linkColor: root.linkColor
-                lineHeight: 1.3
+                selectionColor: root.c.sel
+                selectedTextColor: root.mention ? root.c.warn : root.c.fg
                 font.family: ui.sans
                 font.pixelSize: root.bodySize
+                onActiveFocusChanged: if (!activeFocus) deselect()
+                Keys.onEscapePressed: function(event) { if (selectedText.length > 0) { deselect(); event.accepted = true } else event.accepted = false }
                 onLinkActivated: function(link) { var u = Format.safeUrl(link); if (u !== "") Quickshell.execDetached(["/usr/share/omarchy/bin/omarchy-launch-browser", u]) }
-                MouseArea { anchors.fill: parent; acceptedButtons: Qt.NoButton; cursorShape: parent.hoveredLink !== "" ? Qt.PointingHandCursor : Qt.ArrowCursor }
+                MouseArea { anchors.fill: parent; acceptedButtons: Qt.NoButton; cursorShape: parent.hoveredLink !== "" ? Qt.PointingHandCursor : Qt.IBeamCursor }
               }
 
               // Image
@@ -894,7 +908,7 @@ Item {
       // Hover actions
       Rectangle {
         id: actions
-        visible: (rowMouse.containsMouse || actionsMouse.containsMouse || root.paletteOpen) && !root.undecryptable && !root.deleted
+        visible: (rowHover.hovered || actionsHover.hovered || root.paletteOpen) && !root.undecryptable && !root.deleted
         anchors.right: parent.right
         anchors.rightMargin: ui.px(10)
         anchors.top: parent.top
@@ -906,7 +920,7 @@ Item {
         color: root.c.bg2
         border.width: 1
         border.color: root.c.line
-        MouseArea { id: actionsMouse; anchors.fill: parent; hoverEnabled: true; acceptedButtons: Qt.NoButton }
+        HoverHandler { id: actionsHover }
         Row {
           id: actionsRow
           anchors.centerIn: parent
