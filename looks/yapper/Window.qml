@@ -213,7 +213,11 @@ Item {
         anchors.left: rail.right
         anchors.top: parent.top
         anchors.bottom: parent.bottom
-        width: ui.sidebarWidth
+        clip: true
+        readonly property real minSidebarWidth: ui.px(80)
+        readonly property real maxSidebarWidth: Math.max(minSidebarWidth, parent.width - rail.width - ui.px(220))
+        readonly property real targetWidth: root.service ? ui.px(root.service.sidebarWidth) : ui.sidebarWidth
+        width: Math.round(Math.max(minSidebarWidth, Math.min(maxSidebarWidth, targetWidth)))
         // Settings take the whole width beside the rail.
         visible: root.view !== "settings"
         c: root.c
@@ -226,6 +230,52 @@ Item {
         onPeopleRequested: function(q) { people.query = q; root.view = "people" }
         onSearchRequested: function(q) { search.scope = ""; search.query = q; root.view = "search"; Qt.callLater(search.run) }
         onSettingsRequested: function(section) { root.openSettings(section) }
+      }
+
+      // Draggable divider between sidebar and conversation
+      MouseArea {
+        id: sidebarResizer
+        visible: sidebar.visible
+        z: 10
+        x: sidebar.x + sidebar.width - width / 2
+        anchors.top: parent.top
+        anchors.bottom: parent.bottom
+        width: ui.px(8)
+        hoverEnabled: true
+        preventStealing: true
+        cursorShape: Qt.SplitHCursor
+        property real dragStartX: 0
+        property real dragStartWidth: 0
+        Rectangle {
+          anchors.horizontalCenter: parent.horizontalCenter
+          anchors.top: parent.top
+          anchors.bottom: parent.bottom
+          width: ui.px(2)
+          color: root.c.accent
+          opacity: parent.containsMouse || parent.pressed ? 0.9 : 0
+          Behavior on opacity { NumberAnimation { duration: Style.duration(120); easing.type: Easing.OutCubic } }
+        }
+        onPressed: function(mouse) {
+          dragStartX = mapToItem(parent, mouse.x, 0).x
+          dragStartWidth = sidebar.width
+        }
+        onPositionChanged: function(mouse) {
+          if (!pressed || !root.service) return
+          var curX = mapToItem(parent, mouse.x, 0).x
+          var newPx = Math.max(sidebar.minSidebarWidth, Math.min(sidebar.maxSidebarWidth, dragStartWidth + (curX - dragStartX)))
+          var scale = ui.k > 0 ? ui.k : 1
+          var unscaled = Math.max(80, Math.min(700, Math.round(newPx / scale)))
+          root.service.previewSetting("sidebarWidth", unscaled)
+        }
+        onReleased: {
+          if (root.service) root.service.set("sidebarWidth", root.service.sidebarWidth)
+        }
+        onCanceled: {
+          if (root.service) root.service.set("sidebarWidth", root.service.sidebarWidth)
+        }
+        onDoubleClicked: {
+          if (root.service) root.service.set("sidebarWidth", 300)
+        }
       }
 
       // Conversation column
@@ -339,10 +389,44 @@ Item {
           anchors.right: parent.right
           anchors.top: parent.top
           anchors.bottom: parent.bottom
-          width: main.split ? ui.px(330) : main.width
+          property real customWidth: 0
+          readonly property real minPanelWidth: ui.px(260)
+          readonly property real maxPanelWidth: Math.max(minPanelWidth, main.width - ui.px(320))
+          width: main.split ? Math.round(Math.max(minPanelWidth, Math.min(maxPanelWidth, customWidth > 0 ? customWidth : ui.px(330)))) : main.width
           visible: main.panelOpen
           color: root.c.bg2
-          Rectangle { anchors.left: parent.left; anchors.top: parent.top; anchors.bottom: parent.bottom; width: 1; color: root.c.line; visible: main.split }
+          Rectangle {
+            anchors.left: parent.left
+            anchors.top: parent.top
+            anchors.bottom: parent.bottom
+            width: panelResizer.containsMouse || panelResizer.pressed ? ui.px(2) : 1
+            color: panelResizer.containsMouse || panelResizer.pressed ? root.c.accent : root.c.line
+            visible: main.split
+          }
+          MouseArea {
+            id: panelResizer
+            visible: main.split
+            z: 10
+            x: -width / 2
+            anchors.top: parent.top
+            anchors.bottom: parent.bottom
+            width: ui.px(8)
+            hoverEnabled: true
+            preventStealing: true
+            cursorShape: Qt.SplitHCursor
+            property real dragStartX: 0
+            property real dragStartWidth: 0
+            onPressed: function(mouse) {
+              dragStartX = mapToItem(main, mouse.x, 0).x
+              dragStartWidth = panelBox.width
+            }
+            onPositionChanged: function(mouse) {
+              if (!pressed) return
+              var curX = mapToItem(main, mouse.x, 0).x
+              panelBox.customWidth = Math.max(panelBox.minPanelWidth, Math.min(panelBox.maxPanelWidth, dragStartWidth - (curX - dragStartX)))
+            }
+            onDoubleClicked: panelBox.customWidth = 0
+          }
           Item {
             id: panelHeader
             anchors.left: parent.left

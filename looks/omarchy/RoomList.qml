@@ -130,11 +130,12 @@ Column {
 
   // Find
   Row {
+    readonly property bool compactRow: root.width < Style.space(220)
     width: parent.width
     spacing: Style.spacing.controlGap
     TextField {
       id: searchField
-      width: parent.width - findButton.width - newRoomButton.width - (msgSearchButton.visible ? msgSearchButton.width + Style.spacing.controlGap : 0) - (peopleButton.visible ? peopleButton.width + Style.spacing.controlGap : 0) - 2 * Style.spacing.controlGap
+      width: Math.max(Style.space(36), parent.width - (findButton.visible ? findButton.width + Style.spacing.controlGap : 0) - (newRoomButton.visible ? newRoomButton.width + Style.spacing.controlGap : 0) - (msgSearchButton.visible ? msgSearchButton.width + Style.spacing.controlGap : 0) - (peopleButton.visible ? peopleButton.width + Style.spacing.controlGap : 0))
       maximumLength: 256
       placeholderText: "Find rooms · #alias · @user"
       enabled: !root.searching
@@ -165,6 +166,7 @@ Column {
     }
     Button {
       id: findButton
+      visible: !parent.compactRow
       text: root.searching ? "…" : (root.showSearchButton ? "" : (searchField.text.trim() === "" ? "Explore" : "Find"))
       iconText: "󰇧"
       enabled: !root.searching
@@ -172,20 +174,21 @@ Column {
     }
     Button {
       id: msgSearchButton
-      visible: root.showSearchButton
+      visible: root.showSearchButton && !parent.compactRow
       iconText: "󰍉"
       text: ""
       onClicked: root.searchRequested()
     }
     Button {
       id: peopleButton
-      visible: root.showPeopleButton && root.service && root.service.communityJoined
+      visible: root.showPeopleButton && !parent.compactRow && root.service && root.service.communityJoined
       iconText: "󰀏"
       text: ""
       onClicked: root.peopleRequested()
     }
     Button {
       id: newRoomButton
+      visible: root.width >= Style.space(120)
       iconText: "󰐕"
       text: root.showSearchButton ? "" : "Room"
       bordered: true

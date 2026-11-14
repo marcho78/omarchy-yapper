@@ -559,7 +559,7 @@ Column {
           Text {
             textFormat: Text.PlainText
             id: valueLabel
-            text: String(slider.dragging ? Math.round(slider.liveValue) : (Number(field.value) || field.modelData.defaultValue || 0)) + (field.key === "fontScale" ? "%" : "")
+            text: String(slider.dragging ? Math.round(slider.liveValue) : (Number(field.value) || field.modelData.defaultValue || 0)) + (field.key === "fontScale" ? "%" : (field.key === "sidebarWidth" ? " px" : ""))
             color: Color.accent
             font.family: root.fontFamily
             font.pixelSize: Style.font.subtitle

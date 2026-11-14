@@ -119,6 +119,7 @@ Item {
   readonly property bool senderColors: flag("senderColors", true)
   readonly property real voiceVolume: Math.max(0.2, Math.min(1, (Number(setting("voiceVolume", 100)) || 100) / 100))
   readonly property real fontScale: Math.max(0.8, Math.min(1.5, (Number(setting("fontScale", 100)) || 100) / 100))
+  readonly property int sidebarWidth: Math.max(80, Math.min(700, Number(setting("sidebarWidth", 300)) || 300))
 
   // ---------- palettes (the Yapper look) ----------
   // A palette is the shell's theme or one of the fixed sets in

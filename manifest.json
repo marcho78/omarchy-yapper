@@ -53,7 +53,8 @@
       "voiceOutput": "",
       "communitySpace": "#omarchy-community:matrix.org",
       "communityPrompt": true,
-      "dmPolicy": "anyone"
+      "dmPolicy": "anyone",
+      "sidebarWidth": 300
     },
     "schema": [
       {
@@ -193,6 +194,17 @@
         "label": "Selection",
         "defaultValue": "",
         "description": "The open room in the list."
+      },
+      {
+        "key": "sidebarWidth",
+        "type": "integer",
+        "label": "Sidebar width (px)",
+        "min": 80,
+        "max": 700,
+        "step": 10,
+        "defaultValue": 300,
+        "description": "Width of the rooms list pane in the window. You can also drag the divider between panes.",
+        "section": "Appearance"
       },
       {
         "key": "messageStyle",

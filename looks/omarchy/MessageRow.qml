@@ -214,7 +214,7 @@ Item {
         anchors.leftMargin: -Style.space(6)
         anchors.rightMargin: -Style.space(6)
         radius: Style.space(4)
-        color: root.highlighted ? Util.alpha(root.accent, 0.18) : root.mention ? Util.alpha(Color.urgent, 0.08) : (rowMouse.containsMouse && !root.bubbles ? root.hover : "transparent")
+        color: root.highlighted ? Util.alpha(root.accent, 0.18) : root.mention ? Util.alpha(Color.urgent, 0.08) : (rowHover.hovered && !root.bubbles ? root.hover : "transparent")
         Behavior on color { ColorAnimation { duration: 200 } }
       }
       // Mentions get a bar on the left, like Element
@@ -228,17 +228,14 @@ Item {
         radius: 2
         color: Color.urgent
       }
-      MouseArea {
-        id: rowMouse
-        anchors.fill: parent
-        hoverEnabled: true
-        acceptedButtons: Qt.NoButton
+      HoverHandler {
+        id: rowHover
       }
 
       // Hover actions: Reply, and Edit on your own text messages
       Rectangle {
         id: actions
-        visible: (rowMouse.containsMouse || actionsMouse.containsMouse || root.paletteOpen) && root.msgtype !== "unable_to_decrypt" && !root.deleted
+        visible: (rowHover.hovered || actionsHover.hovered || root.paletteOpen) && root.msgtype !== "unable_to_decrypt" && !root.deleted
         anchors.right: parent.right
         anchors.top: parent.top
         anchors.topMargin: -Style.space(10)
@@ -249,7 +246,7 @@ Item {
         color: root.bg
         border.width: 1
         border.color: Util.alpha(root.fg, 0.25)
-        MouseArea { id: actionsMouse; anchors.fill: parent; hoverEnabled: true; acceptedButtons: Qt.NoButton }
+        HoverHandler { id: actionsHover }
         Row {
           id: actionsRow
           anchors.centerIn: parent
@@ -338,7 +335,7 @@ Item {
 
       // Time on hover for grouped messages (flat style)
       Text {
-        visible: !root.bubbles && root.avatar && !root.header && rowMouse.containsMouse
+        visible: !root.bubbles && root.avatar && !root.header && rowHover.hovered
         anchors.left: parent.left
         anchors.top: parent.top
         anchors.topMargin: Style.space(2)
@@ -684,34 +681,53 @@ Item {
             id: bubble
             anchors.right: root.bubbles && root.mine ? parent.right : undefined
             anchors.left: root.bubbles && root.mine ? undefined : parent.left
-            width: root.bubbles ? Math.min(bodyText.implicitWidth + Style.space(24), parent.width * 0.78) : parent.width
+            width: root.bubbles ? Math.min(Math.ceil(bodyMeasure.implicitWidth) + Style.space(24), parent.width * 0.78) : parent.width
             implicitHeight: bodyText.implicitHeight + (root.bubbles ? Style.space(16) : 0)
             radius: root.bubbles ? Style.space(14) : 0
             color: !root.bubbles ? "transparent" : (root.mine ? root.accent : Util.alpha(root.fg, 0.1))
 
             Text {
+              id: bodyMeasure
+              visible: false
+              textFormat: Text.RichText
+              text: root.bubbles ? bodyText.text : ""
+              font: bodyText.font
+            }
+
+            TextEdit {
               id: bodyText
-              anchors.fill: parent
-              anchors.margins: root.bubbles ? Style.space(8) : 0
+              readonly property color linkColor: root.bubbles && root.mine ? root.bg : root.accent
+              readonly property bool selectable: !root.deleted && root.msgtype !== "unable_to_decrypt"
+              anchors.left: parent.left
+              anchors.right: parent.right
+              anchors.top: parent.top
+              anchors.topMargin: root.bubbles ? Style.space(8) : 0
               anchors.leftMargin: root.bubbles ? Style.space(12) : 0
               anchors.rightMargin: root.bubbles ? Style.space(12) : 0
-              textFormat: Text.RichText
+              readOnly: true
+              selectByMouse: selectable
+              activeFocusOnPress: selectable
+              persistentSelection: false
+              textFormat: TextEdit.RichText
               text: root.deleted ? "<i>Message deleted</i>"
                 : root.msgtype === "unable_to_decrypt"
                 ? "<i>󰌾 Unable to decrypt — this device did not have the key. It fills in once backup or another device shares it.</i>"
                 : (root.isAttachment ? Format.linkify(root.attachment.caption || "", linkColor)
                   : (root.html !== "" ? Format.cleanHtml(root.html, linkColor) : Format.linkify(root.body, linkColor)))
-              wrapMode: Text.Wrap
+              wrapMode: TextEdit.Wrap
               opacity: root.msgtype === "unable_to_decrypt" || root.deleted ? 0.6 : 1
               color: root.bubbles && root.mine ? root.bg : root.fg
-              linkColor: root.bubbles && root.mine ? root.bg : root.accent
+              selectionColor: root.bubbles && root.mine ? Util.alpha(root.bg, 0.35) : Style.selectionFillFor(root.fg, root.accent)
+              selectedTextColor: root.bubbles && root.mine ? root.bg : root.fg
               font.family: root.fontFamily
               font.pixelSize: root.bodySize
+              onActiveFocusChanged: if (!activeFocus) deselect()
+              Keys.onEscapePressed: function(event) { if (selectedText.length > 0) { deselect(); event.accepted = true } else event.accepted = false }
               onLinkActivated: function(link) { var u = Format.safeUrl(link); if (u !== "") Quickshell.execDetached(["/usr/share/omarchy/bin/omarchy-launch-browser", u]) }
               MouseArea {
                 anchors.fill: parent
                 acceptedButtons: Qt.NoButton
-                cursorShape: parent.hoveredLink !== "" ? Qt.PointingHandCursor : Qt.IBeamCursor
+                cursorShape: parent.hoveredLink !== "" ? Qt.PointingHandCursor : (parent.selectable ? Qt.IBeamCursor : Qt.ArrowCursor)
               }
             }
           }

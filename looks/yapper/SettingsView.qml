@@ -324,6 +324,14 @@ Item {
         visible: root.section === "appearance"
         spacing: ui.px(4)
         SettingRow { c: root.c; label: "Look"; description: "Yapper is the designed look; Omarchy uses the shell's own widgets and follows the desktop theme."; Segmented { c: root.c; options: [{ value: "yapper", label: "Yapper" }, { value: "omarchy", label: "Omarchy" }]; value: root.service ? root.service.look : "yapper"; onChosen: function(v) { root.service.set("look", v) } } }
+        SettingRow {
+          c: root.c; label: "Sidebar width"; description: "Width of the rooms pane in the window (or drag the divider)"
+          Row {
+            spacing: ui.px(10)
+            LevelSlider { id: sidebarWidthSlider; c: root.c; anchors.verticalCenter: parent.verticalCenter; from: 80; to: 700; step: 10; value: Number(root.setting("sidebarWidth", 300)) || 300; onMoved: function(v) { root.service.previewSetting("sidebarWidth", Math.round(v)) }; onReleased: function(v) { root.service.set("sidebarWidth", Math.round(v)) } }
+            Text { anchors.verticalCenter: parent.verticalCenter; width: ui.px(44); horizontalAlignment: Text.AlignRight; text: Math.round(sidebarWidthSlider.shown) + " px"; color: root.c.fg; font.family: ui.mono; font.pixelSize: ui.f11 }
+          }
+        }
         SectionLabel { label: "Palette" }
         Flow {
           width: parent.width
